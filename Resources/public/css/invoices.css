@@ -1,0 +1,29 @@
+.invoice-assoc-corner {
+    position: relative;
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+    }
+}
+
+.invoice-assoc-parent::after {
+    border-width: 14px 14px 0 0;
+    border-color: #198754 transparent transparent transparent;
+}
+
+.invoice-assoc-child::after {
+    border-width: 14px 14px 0 0;
+    border-color: #f0ad4e transparent transparent transparent;
+}
+
+.invoice-assoc-link {
+    text-decoration: none;
+    &:hover {
+        text-decoration: underline;
+    }
+}

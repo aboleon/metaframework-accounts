@@ -1,0 +1,52 @@
+{
+    "panel.crush.css": {
+        "imports": [],
+        "datem_sum": 1765300383,
+        "options": {
+            "minify": true,
+            "formatter": null,
+            "versioning": true,
+            "boilerplate": true,
+            "vars": [],
+            "cache": true,
+            "context": null,
+            "import_path": null,
+            "output_file": null,
+            "output_dir": null,
+            "asset_dir": null,
+            "doc_root": null,
+            "vendor_target": "all",
+            "rewrite_import_urls": true,
+            "plugins": null,
+            "settings": [],
+            "stat_dump": false,
+            "source_map": false,
+            "newlines": "use-platform"
+        }
+    },
+    "invoices.crush.css": {
+        "imports": [],
+        "datem_sum": 1770283260,
+        "options": {
+            "minify": true,
+            "formatter": null,
+            "versioning": true,
+            "boilerplate": true,
+            "vars": [],
+            "cache": true,
+            "context": null,
+            "import_path": null,
+            "output_file": null,
+            "output_dir": null,
+            "asset_dir": null,
+            "doc_root": null,
+            "vendor_target": "all",
+            "rewrite_import_urls": true,
+            "plugins": null,
+            "settings": [],
+            "stat_dump": false,
+            "source_map": false,
+            "newlines": "use-platform"
+        }
+    }
+}
