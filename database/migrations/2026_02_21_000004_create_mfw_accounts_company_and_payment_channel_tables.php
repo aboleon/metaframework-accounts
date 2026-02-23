@@ -11,6 +11,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('mfw_accounts_company_data', function (Blueprint $table) {
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
+
             $table->increments('id');
             $table->unsignedInteger('company_id');
             $table->text('licence')->nullable();
@@ -24,6 +27,9 @@ return new class extends Migration
         });
 
         Schema::create('mfw_accounts_bank_accounts_data', function (Blueprint $table) {
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
+
             $table->unsignedInteger('id');
             $table->unsignedInteger('account_id');
             $table->text('name');
@@ -33,6 +39,9 @@ return new class extends Migration
         });
 
         Schema::create('mfw_accounts_pay_means_channels', function (Blueprint $table) {
+            $table->charset = 'utf8mb4';
+            $table->collation = 'utf8mb4_unicode_ci';
+
             $table->increments('id');
             $table->unsignedInteger('pay_mean_id')->nullable();
             $table->unsignedInteger('bank_account_id')->nullable();
