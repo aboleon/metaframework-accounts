@@ -64,8 +64,8 @@
                 $isCompany = $business !== null;
                 $accountLocale = $item->locale ?: config('app.fallback_locale');
                 $accountName = $isCompany
-                    ? $business?->getTranslation('name', $accountLocale)
-                    : trim($item->getTranslation('last_name', $accountLocale) . ' ' . $item->getTranslation('first_name', $accountLocale));
+                    ? $business?->translation('name', $accountLocale)
+                    : trim($item->translation('last_name', $accountLocale) . ' ' . $item->translation('first_name', $accountLocale));
                 $nomail = str_contains($item->email,'random_');
             @endphp
 
@@ -78,8 +78,8 @@
                                 {{ $accountName }}
                             @else
                                 <span
-                                    class="uppercase">{!! $item->getTranslation('last_name', $accountLocale)  !!}</span>
-                                {!! $item->getTranslation('first_name', $accountLocale) !!}
+                                    class="uppercase">{!! $item->translation('last_name', $accountLocale)  !!}</span>
+                                {!! $item->translation('first_name', $accountLocale) !!}
                             @endif
                         </a>
                         @if($isCompany)

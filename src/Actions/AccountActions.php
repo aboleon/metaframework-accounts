@@ -70,10 +70,10 @@ class AccountActions
 
                 return [
                     'id'         => $account->id,
-                    'first_name' => $account->getTranslation('first_name', $accountLocale),
-                    'last_name'  => $account->getTranslation('last_name', $accountLocale),
+                    'first_name' => $account->translation('first_name', $accountLocale),
+                    'last_name'  => $account->translation('last_name', $accountLocale),
                     'email'      => $account->email,
-                    'business'   => $account->business?->getTranslation('name', $accountLocale),
+                    'business'   => $account->business?->translation('name', $accountLocale),
                 ];
             })
             ->values()
@@ -159,7 +159,7 @@ class AccountActions
                 continue;
             }
 
-            $address->{$field} = $locales;
+            $address->{$field} = Locale::multilang() ? $locales : $this->singleLocaleValue($locales);
         }
 
         $address->save();
@@ -253,19 +253,19 @@ class AccountActions
 
     private function translateNameService(mixed $value, string $fieldName): array|string|null
     {
-        if ($value === null) {
+        $stringValue = $this->singleLocaleValue($value);
+
+        if ($stringValue === null || $stringValue === '') {
             return null;
         }
 
-        $stringValue = is_array($value) ? ($value[app()->getLocale()] ?? reset($value)) : trim((string)$value);
-
-        if ($stringValue === '') {
-            return null;
+        if (!Locale::multilang()) {
+            return $stringValue;
         }
 
         $payload      = [$fieldName => $stringValue];
         $translator   = new GooglePlacesTranslator;
-        $translations = $translator->translations($payload, app()->getLocale(), Locale::locales());
+        $translations = $translator->translations($payload, app()->getLocale(), $this->translatableLocales());
 
         return $translations[$fieldName] ?? $this->normalizeNameTranslations($value);
     }
@@ -316,7 +316,7 @@ class AccountActions
 
     /**
      * @param  array<string, mixed>  $geoData
-     * @return array<string, array<string, string>>
+     * @return array<string, mixed>
      */
     private function resolveTranslations(array $geoData, ?AccountAddress $address = null): array
     {
@@ -337,14 +337,26 @@ class AccountActions
             }
         }
 
+        if ($payload === []) {
+            return $translations;
+        }
+
+        if (!Locale::multilang()) {
+            foreach ($payload as $field => $value) {
+                $translations[$field] = $this->singleLocaleValue($value);
+            }
+
+            return $translations;
+        }
+
         $translator = new GooglePlacesTranslator;
 
-        return $translator->translations($payload, app()->getLocale(), Locale::locales(), $translations);
+        return $translator->translations($payload, app()->getLocale(), $this->translatableLocales(), $translations);
     }
 
     /**
      * @param  array<int, string>  $fields
-     * @return array<string, array<string, string>>
+     * @return array<string, mixed>
      */
     private function existingTranslations(?AccountAddress $address, array $fields): array
     {
@@ -355,7 +367,13 @@ class AccountActions
         $translations = [];
 
         foreach ($fields as $field) {
-            $translations[$field] = $address->getTranslations($field);
+            if (Locale::multilang() && method_exists($address, 'getTranslations')) {
+                $translations[$field] = $address->getTranslations($field);
+
+                continue;
+            }
+
+            $translations[$field] = $this->singleLocaleValue($address->{$field} ?? null);
         }
 
         return $translations;
@@ -424,6 +442,10 @@ class AccountActions
             return null;
         }
 
+        if (!Locale::multilang()) {
+            return $this->singleLocaleValue($value);
+        }
+
         if (is_array($value)) {
             return $this->normalizeTranslationArray($value);
         }
@@ -441,7 +463,31 @@ class AccountActions
      */
     private function translatableLocales(): array
     {
-        return config('mfw.translatable.locales', ['fr', 'bg', 'en']);
+        $fallbackLocales = collect([
+            app()->getLocale(),
+            config('mfw.translatable.fallback_locale'),
+            config('app.fallback_locale'),
+        ])->filter(fn ($locale) => is_string($locale) && $locale !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (!Locale::multilang()) {
+            return $fallbackLocales ?: [app()->getLocale()];
+        }
+
+        $configured = Locale::locales();
+
+        if (!is_array($configured) || $configured === []) {
+            return $fallbackLocales ?: [app()->getLocale()];
+        }
+
+        return collect($configured)
+            ->map(fn ($locale) => (string) $locale)
+            ->filter(fn ($locale) => $locale !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function resolveAccountLocale(?string $locale): string
@@ -452,15 +498,19 @@ class AccountActions
             return $locale;
         }
 
-        return config('app.fallback_locale');
+        return (string) (config('mfw.translatable.fallback_locale') ?: config('app.fallback_locale'));
     }
 
     /**
      * @param  array<string, mixed>  $values
-     * @return array<string, string|null>
+     * @return array<string, string|null>|string|null
      */
-    private function normalizeTranslationArray(array $values): array
+    private function normalizeTranslationArray(array $values): array|string|null
     {
+        if (!Locale::multilang()) {
+            return $this->singleLocaleValue($values);
+        }
+
         $locales      = $this->translatableLocales();
         $translations = [];
 
@@ -491,10 +541,14 @@ class AccountActions
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, string>|string
      */
-    private function buildTranslationsFromString(string $value): array
+    private function buildTranslationsFromString(string $value): array|string
     {
+        if (!Locale::multilang()) {
+            return $value;
+        }
+
         $latin    = $value;
         $cyrillic = $value;
 
@@ -512,6 +566,49 @@ class AccountActions
         }
 
         return $translations;
+    }
+
+    private function singleLocaleValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_array($value)) {
+            $stringValue = trim((string) $value);
+
+            return $stringValue !== '' ? $stringValue : null;
+        }
+
+        $preferredLocales = collect([
+            request('locale'),
+            app()->getLocale(),
+            config('mfw.translatable.fallback_locale'),
+            config('app.fallback_locale'),
+        ])->filter(fn ($locale) => is_string($locale) && $locale !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        foreach ($preferredLocales as $locale) {
+            if (!array_key_exists($locale, $value)) {
+                continue;
+            }
+
+            $stringValue = trim((string) $value[$locale]);
+            if ($stringValue !== '') {
+                return $stringValue;
+            }
+        }
+
+        foreach ($value as $candidate) {
+            $stringValue = trim((string) $candidate);
+            if ($stringValue !== '') {
+                return $stringValue;
+            }
+        }
+
+        return null;
     }
 
     private function transliterate(string $direction, string $value): string

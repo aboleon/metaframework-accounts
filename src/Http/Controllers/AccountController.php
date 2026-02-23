@@ -255,7 +255,7 @@ class AccountController extends Controller
 
     /**
      * @param  array<string, mixed>  $geoData
-     * @return array<string, array<string, string>>
+     * @return array<string, mixed>
      */
     private function resolveTranslations(array $geoData, ?AccountAddress $address = null): array
     {
@@ -276,14 +276,26 @@ class AccountController extends Controller
             }
         }
 
+        if ($payload === []) {
+            return $translations;
+        }
+
+        if (!Locale::multilang()) {
+            foreach ($payload as $field => $value) {
+                $translations[$field] = $this->singleLocaleValue($value);
+            }
+
+            return $translations;
+        }
+
         $translator = new GooglePlacesTranslator;
 
-        return $translator->translations($payload, app()->getLocale(), Locale::locales(), $translations);
+        return $translator->translations($payload, app()->getLocale(), $this->translatableLocales(), $translations);
     }
 
     /**
      * @param  array<int, string>  $fields
-     * @return array<string, array<string, string>>
+     * @return array<string, mixed>
      */
     private function existingTranslations(?AccountAddress $address, array $fields): array
     {
@@ -294,16 +306,13 @@ class AccountController extends Controller
         $translations = [];
 
         foreach ($fields as $field) {
-            if (method_exists($address, 'getTranslations')) {
+            if (Locale::multilang() && method_exists($address, 'getTranslations')) {
                 $translations[$field] = $address->getTranslations($field);
 
                 continue;
             }
 
-            $value = $address->{$field} ?? null;
-            if ($value !== null && $value !== '') {
-                $translations[$field][app()->getLocale()] = $value;
-            }
+            $translations[$field] = $this->singleLocaleValue($address->{$field} ?? null);
         }
 
         return $translations;
@@ -337,5 +346,79 @@ class AccountController extends Controller
             ))
             ->orderBy('name_sort', $sortOrder)
             ->orderBy('users.id', $sortOrder);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function translatableLocales(): array
+    {
+        $fallbackLocales = collect([
+            app()->getLocale(),
+            config('mfw.translatable.fallback_locale'),
+            config('app.fallback_locale'),
+        ])->filter(fn ($locale) => is_string($locale) && $locale !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (!Locale::multilang()) {
+            return $fallbackLocales ?: [app()->getLocale()];
+        }
+
+        $configured = Locale::locales();
+
+        if (!is_array($configured) || $configured === []) {
+            return $fallbackLocales ?: [app()->getLocale()];
+        }
+
+        return collect($configured)
+            ->map(fn ($locale) => (string) $locale)
+            ->filter(fn ($locale) => $locale !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function singleLocaleValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_array($value)) {
+            $stringValue = trim((string) $value);
+
+            return $stringValue !== '' ? $stringValue : null;
+        }
+
+        $preferredLocales = collect([
+            app()->getLocale(),
+            config('mfw.translatable.fallback_locale'),
+            config('app.fallback_locale'),
+        ])->filter(fn ($locale) => is_string($locale) && $locale !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        foreach ($preferredLocales as $locale) {
+            if (!array_key_exists($locale, $value)) {
+                continue;
+            }
+
+            $stringValue = trim((string) $value[$locale]);
+            if ($stringValue !== '') {
+                return $stringValue;
+            }
+        }
+
+        foreach ($value as $candidate) {
+            $stringValue = trim((string) $candidate);
+            if ($stringValue !== '') {
+                return $stringValue;
+            }
+        }
+
+        return null;
     }
 }
