@@ -255,10 +255,12 @@
                         <span id="totalSUM">{!! $data ? Prices::readableFormat(price: $data->amount + $data->vat, currency: '') : 0 !!}</span>
                         <span class="currency">{!! $data ? $data->currencyType->name : null !!}</span>
                     </h3>
-                    @if ($accessor->isBGN())
-                        <h5 id="totalSUMConverted" class="text-muted" data-rate="{{ Invoice::BGN_TO_EUR_RATE }}"
-                            data-bgn-id="{{ Invoice::BGN_CURRENCY_ID }}">
-                            {{ Prices::readableFormat(price: $accessor->bgnToEur(), currency: '') }} EUR
+                    @if ($accessor->usesReportingConversion())
+                        <h5 id="totalSUMConverted" class="text-muted" data-rate="{{ Invoice::reportingCurrencyRate() }}"
+                            data-convert-source-id="{{ Invoice::reportingCurrencySourceId() }}"
+                            data-convert-target-label="{{ Invoice::reportingCurrencyLabel() }}">
+                            {{ Prices::readableFormat(price: $accessor->totalInReportingCurrency(), currency: '') }}
+                            {{ Invoice::reportingCurrencyLabel() }}
                         </h5>
                     @endif
 

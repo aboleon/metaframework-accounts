@@ -85,20 +85,21 @@ function updateConvertedTotal(total) {
         return;
     }
 
-    var bgnId = parseInt($converted.data('bgn-id'), 10);
+    var sourceCurrencyId = parseInt($converted.data('convert-source-id'), 10);
     var rate = parseFloat($converted.data('rate')) || 0;
+    var targetLabel = String($converted.data('convert-target-label') || '').trim();
     var currencyId = parseInt($('select[name="currency"]').val(), 10);
 
-    if (!rate || !bgnId || currencyId !== bgnId) {
+    if (!rate || !sourceCurrencyId || currencyId !== sourceCurrencyId) {
         $converted.addClass('d-none');
         return;
     }
 
-    var totalEur = total / rate;
+    var totalConverted = total / rate;
 
     $converted
         .removeClass('d-none')
-        .text(formatPrice(totalEur) + ' EUR');
+        .text(formatPrice(totalConverted) + (targetLabel ? ' ' + targetLabel : ''));
 }
 
 function deleteLine() {

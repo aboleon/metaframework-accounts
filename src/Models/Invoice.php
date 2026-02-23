@@ -30,14 +30,6 @@ class Invoice extends Model
 
     public const DEFAULT_DOC_TYPE = 5;
 
-    public const DEFAULT_CURRENCY = 1;
-
-    public const EUR_CURRENCY_ID = 1;
-
-    public const BGN_CURRENCY_ID = 2;
-
-    public const BGN_TO_EUR_RATE = 1.95583;
-
     protected $table = 'mfw_accounts_invoices';
 
     public $timestamps = false;
@@ -94,8 +86,85 @@ class Invoice extends Model
     protected $attributes
         = [
             'doc_type' => self::DEFAULT_DOC_TYPE,
-            'currency' => self::DEFAULT_CURRENCY,
         ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        if (! array_key_exists('currency', $attributes) && ! array_key_exists('currency', $this->attributes)) {
+            $this->attributes['currency'] = self::defaultCurrencyId();
+        }
+    }
+
+    public static function defaultCurrencyId(): int
+    {
+        return (int) config('mfw-accounts.invoice.default_currency_id', 1);
+    }
+
+    public static function reportingCurrencyTargetId(): ?int
+    {
+        $value = config('mfw-accounts.reporting_currency.target_currency_id');
+
+        return is_numeric($value) ? (int) $value : null;
+    }
+
+    public static function reportingCurrencyLabel(): string
+    {
+        return trim((string) config('mfw-accounts.reporting_currency.label', 'EUR'));
+    }
+
+    public static function reportingCurrencySourceId(): ?int
+    {
+        $value = config('mfw-accounts.reporting_currency.conversion.source_currency_id');
+
+        return is_numeric($value) ? (int) $value : null;
+    }
+
+    public static function reportingCurrencyRate(): ?float
+    {
+        $value = config('mfw-accounts.reporting_currency.conversion.rate');
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $rate = (float) $value;
+
+        return $rate > 0 ? $rate : null;
+    }
+
+    public static function usesReportingConversionForCurrency(?int $currencyId): bool
+    {
+        $sourceId = self::reportingCurrencySourceId();
+        $rate = self::reportingCurrencyRate();
+
+        return $currencyId !== null && $sourceId !== null && $rate !== null && $currencyId === $sourceId;
+    }
+
+    public static function convertAmountToReporting(float|int $amount, ?int $currencyId): float
+    {
+        if (! self::usesReportingConversionForCurrency($currencyId)) {
+            return (float) $amount;
+        }
+
+        $rate = self::reportingCurrencyRate();
+
+        return $rate ? ((float) $amount / $rate) : (float) $amount;
+    }
+
+    public static function reportingSqlExpression(string $column): string
+    {
+        $sourceId = self::reportingCurrencySourceId();
+        $rate = self::reportingCurrencyRate();
+        $columnExpression = "({$column} / 100.0)";
+
+        if ($sourceId === null || $rate === null) {
+            return "sum({$columnExpression})";
+        }
+
+        return "sum(case when currency = {$sourceId} then {$columnExpression} / {$rate} else {$columnExpression} end)";
+    }
 
     public static function getClientInvoices(int $client): array
     {

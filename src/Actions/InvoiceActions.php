@@ -347,22 +347,16 @@ class InvoiceActions
 
             $totalIncomeEur = $invoiceCollection->reduce(function (float $carry, Invoice $item): float {
                 $amount = $item->amount + $item->vat;
-                $amountEur = $item->currency == Invoice::BGN_CURRENCY_ID
-                    ? $amount / Invoice::BGN_TO_EUR_RATE
-                    : $amount;
+                $amountEur = Invoice::convertAmountToReporting($amount, (int) $item->currency);
 
                 return $carry + $amountEur;
             }, 0.0);
 
             $netGain = $invoice->net_gain ?? 0.0;
-            $netGainEur = $invoice->currency == Invoice::BGN_CURRENCY_ID
-                ? $netGain / Invoice::BGN_TO_EUR_RATE
-                : $netGain;
+            $netGainEur = Invoice::convertAmountToReporting($netGain, (int) $invoice->currency);
 
             $expenses = $invoice->expenses ?? 0.0;
-            $expensesEur = $invoice->currency == Invoice::BGN_CURRENCY_ID
-                ? $expenses / Invoice::BGN_TO_EUR_RATE
-                : $expenses;
+            $expensesEur = Invoice::convertAmountToReporting($expenses, (int) $invoice->currency);
             $payableVatEur = $netGainEur > 0.0 ? $netGainEur * 0.2 : 0.0;
             $netGainPercent = $invoice->net_gain_percent ?? 0.0;
 

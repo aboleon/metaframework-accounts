@@ -27,7 +27,7 @@ return new class extends Migration {
             $table->integer('net_gain_percent')->nullable()->default(0)->comment('Computed net gain percent from net_gain and total amount.');
             $table->string('expense_protocol_ref')->nullable();
             $table->unsignedInteger('vat_id')->nullable();
-            $table->unsignedInteger('currency')->default(2);
+            $table->unsignedInteger('currency');
             $table->unsignedTinyInteger('sell_channel')->nullable();
             $table->string('paid', 1)->nullable();
             $table->unsignedInteger('pay_mean')->nullable();

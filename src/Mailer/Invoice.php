@@ -41,7 +41,7 @@ class Invoice extends MailerAbstract
 
         $this->setViewData('invoice', $this->invoice);
         $this->setViewData('client', $this->invoice->client);
-        $this->setViewData('pdf_url', url('mfw-accounts/pdf/' . $this->invoice->hash));
+        $this->setViewData('pdf_url', route('mfw-accounts.pdf', $this->invoice->hash));
         $this->setViewData('locale', $this->locale);
 
         return $this;

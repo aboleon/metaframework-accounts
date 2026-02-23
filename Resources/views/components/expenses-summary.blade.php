@@ -1,7 +1,8 @@
 @php use MetaFramework\Accessors\Prices; @endphp
 @if ($expenseAccessor->hasExpenseData())
     @php
-        $isBGN = $expenseAccessor->isBGN();
+        $usesReportingConversion = $expenseAccessor->usesReportingConversion();
+        $reportingCurrencyLabel = $expenseAccessor->reportingCurrencyLabel();
     @endphp
     <table class="table-bordered mb-0 table">
         <tbody>
@@ -9,9 +10,9 @@
             <th>{{ __('mfw-accounts::ui.expenses.amount') }}</th>
             <td>
                 {{ $expenseAccessor->getExpensesFormatted() }}
-                @if ($isBGN)
+                @if ($usesReportingConversion)
                     <span
-                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->getExpensesInEur(), 'EUR') }})</span>
+                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->getExpensesInReportingCurrency(), $reportingCurrencyLabel) }})</span>
                 @endif
             </td>
         </tr>
@@ -19,9 +20,9 @@
             <th>{{ __('mfw-accounts::ui.expenses.income') }}</th>
             <td>
                 {{ $expenseAccessor->calculateIncomeFormatted() }}
-                @if ($isBGN)
+                @if ($usesReportingConversion)
                     <span
-                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateIncomeInEur(), 'EUR') }})</span>
+                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateIncomeInReportingCurrency(), $reportingCurrencyLabel) }})</span>
                 @endif
             </td>
         </tr>
@@ -29,9 +30,9 @@
             <th>{{ __('mfw-accounts::ui.expenses.brute_profit') }}</th>
             <td>
                 {{ $expenseAccessor->calculateBruteProfitFormatted() }}
-                @if ($isBGN)
+                @if ($usesReportingConversion)
                     <span
-                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateBruteProfitInEur(), 'EUR') }})</span>
+                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateBruteProfitInReportingCurrency(), $reportingCurrencyLabel) }})</span>
                 @endif
             </td>
         </tr>
@@ -39,9 +40,9 @@
             <th>{{ __('mfw-accounts::ui.expenses.tax_base') }}</th>
             <td>
                 {{ $expenseAccessor->calculateTaxBaseFormatted() }}
-                @if ($isBGN)
+                @if ($usesReportingConversion)
                     <span
-                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateTaxBaseInEur(), 'EUR') }})</span>
+                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateTaxBaseInReportingCurrency(), $reportingCurrencyLabel) }})</span>
                 @endif
             </td>
         </tr>
@@ -49,9 +50,9 @@
             <th>{{ __('mfw-accounts::ui.expenses.payable_vat') }} (20%)</th>
             <td>
                 {{ $expenseAccessor->calculatePayableVatFormatted() }}
-                @if ($isBGN)
+                @if ($usesReportingConversion)
                     <span
-                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculatePayableVatInEur(), 'EUR') }})</span>
+                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculatePayableVatInReportingCurrency(), $reportingCurrencyLabel) }})</span>
                 @endif
             </td>
         </tr>
@@ -59,9 +60,9 @@
             <th>{{ __('mfw-accounts::ui.expenses.net_profit') }}</th>
             <td>
                 <strong>{{ $expenseAccessor->calculateNetProfitFormatted() }}</strong>
-                @if ($isBGN)
+                @if ($usesReportingConversion)
                     <span
-                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateNetProfitInEur(), 'EUR') }})</span>
+                        class="text-muted">({{ Prices::readableFormat($expenseAccessor->calculateNetProfitInReportingCurrency(), $reportingCurrencyLabel) }})</span>
                 @endif
             </td>
         </tr>

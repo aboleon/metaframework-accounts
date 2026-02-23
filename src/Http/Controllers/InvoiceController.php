@@ -59,14 +59,10 @@ class InvoiceController extends Controller
         }
 
         $total = $query->count();
-        $bgnId = Invoice::BGN_CURRENCY_ID;
-        $rate = Invoice::BGN_TO_EUR_RATE;
         $totalAmountEur = (clone $query)
             ->toBase()
             ->reorder()
-            ->selectRaw(
-                "SUM(CASE WHEN currency = {$bgnId} THEN (amount / 100.0) / {$rate} ELSE (amount / 100.0) END) as total_eur"
-            )
+            ->selectRaw(Invoice::reportingSqlExpression('amount') . ' as total_eur')
             ->value('total_eur');
         $summaryInvoices = (clone $query)
             ->select(['id', 'currency', 'expenses', 'amount', 'vat', 'net_gain', 'net_gain_percent'])
@@ -78,11 +74,9 @@ class InvoiceController extends Controller
         $summaryTotals = $summaryInvoices->reduce(
             function (array $carry, Invoice $invoice): array {
                 $accessor = new InvoiceAccessor($invoice);
-                $carry['expenses_eur'] += $accessor->expensesInEur();
+                $carry['expenses_eur'] += $accessor->expensesInReportingCurrency();
                 $netGain = $invoice->net_gain ?? 0.0;
-                $netGainEur = $invoice->currency == Invoice::BGN_CURRENCY_ID
-                    ? $netGain / Invoice::BGN_TO_EUR_RATE
-                    : $netGain;
+                $netGainEur = Invoice::convertAmountToReporting($netGain, (int) $invoice->currency);
                 $carry['net_gain_eur'] += $netGainEur;
                 if ($netGain > 0.0) {
                     $carry['payable_vat_eur'] += $netGainEur * 0.2;
@@ -173,7 +167,7 @@ class InvoiceController extends Controller
         return view('mfw-accounts::mails.invoice')->with([
             'invoice' => $invoice,
             'client' => $invoice->client,
-            'pdf_url' => url('mfw-accounts/pdf/' . $invoice->hash),
+            'pdf_url' => route('mfw-accounts.pdf', $invoice->hash),
             'locale' => $locale,
             'currencies' => Currency::getCurrencies(),
         ]);
@@ -254,7 +248,7 @@ class InvoiceController extends Controller
     public function persistInvoice(Invoice $invoice, array $data): Invoice
     {
         $docType = (int) ($data['doc_type'] ?? Invoice::DEFAULT_DOC_TYPE);
-        $currency = (int) ($data['currency'] ?? Invoice::DEFAULT_CURRENCY);
+        $currency = (int) ($data['currency'] ?? Invoice::defaultCurrencyId());
         $amounts = $data['amount'] ?? [];
         $vat = $data['vat'] ?? [];
         $vatTypes = $data['vat_id'] ?? [];
@@ -363,7 +357,7 @@ class InvoiceController extends Controller
         ]);
 
         $docType = (int) ($validated['doc_type'] ?? Invoice::DEFAULT_DOC_TYPE);
-        $currency = Invoice::DEFAULT_CURRENCY;
+        $currency = Invoice::defaultCurrencyId();
 
         $invoice = new Invoice;
         $invoice->account_id = (int) $validated['account_id'];

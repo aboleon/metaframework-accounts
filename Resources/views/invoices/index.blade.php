@@ -87,16 +87,14 @@
         @foreach ($invoices as $item)
             @php
                 $accessor = new InvoiceAccessor($item);
+                $reportingCurrencyLabel = $accessor->reportingCurrencyLabel();
                 $expenses = $accessor->expenses();
                 $expenseAssociationId = $expense_associations[$item->id] ?? null;
                 $expenseAssociationParentId = $expense_association_parents[$item->id] ?? null;
                 $expenseAssociationProtocol = $expense_association_protocols[$item->id] ?? null;
                 $totalAmount = $item->amount + $item->vat;
                 $netGain = $item->net_gain ?? 0.0;
-                $netGainEur =
-                    $item->currency == \MetaFramework\Accounts\Models\Invoice::BGN_CURRENCY_ID
-                        ? $netGain / \MetaFramework\Accounts\Models\Invoice::BGN_TO_EUR_RATE
-                        : $netGain;
+                $netGainEur = \MetaFramework\Accounts\Models\Invoice::convertAmountToReporting($netGain, (int) $item->currency);
                 $payableVat = $netGain > 0.0 ? $netGain * 0.2 : 0.0;
                 $payableVatEur = $netGain > 0.0 ? $netGainEur * 0.2 : 0.0;
                 $associatedInvoices = $item->expenseAssociatedInvoices
@@ -134,9 +132,9 @@
                 <td class="text-right">
                     <span
                         class="d-block">{{ Prices::readableFormat(price: $totalAmount, currency: '', stripZeros: true) }}</span>
-                    @if ($accessor->isBGN() && $totalAmount != 0.0)
+                    @if ($accessor->usesReportingConversion() && $totalAmount != 0.0)
                         <span
-                            class="d-block text-muted">{{ Prices::readableFormat(price: $accessor->bgnToEur(), currency: '', stripZeros: true) }}</span>
+                            class="d-block text-muted">{{ Prices::readableFormat(price: $accessor->totalInReportingCurrency(), currency: '', stripZeros: true) }}</span>
                     @endif
                 </td>
                 <td class="{{ !$item->net_gain ? 'bg-warning' : '' }} text-right">
@@ -144,9 +142,9 @@
                         @if ($expenses != 0.0)
                             <span
                                 class="d-block">{{ Prices::readableFormat(price: $expenses, currency: '', stripZeros: true) }}</span>
-                            @if ($accessor->isBGN())
+                            @if ($accessor->usesReportingConversion())
                                 <span
-                                    class="d-block text-muted">{{ Prices::readableFormat(price: $accessor->expensesInEur(), currency: '', stripZeros: true) }}</span>
+                                    class="d-block text-muted">{{ Prices::readableFormat(price: $accessor->expensesInReportingCurrency(), currency: '', stripZeros: true) }}</span>
                             @endif
                         @endif
                     @endif
@@ -156,7 +154,7 @@
                         @if ($item->net_gain)
                             <span
                                 class="d-block">{{ Prices::readableFormat(price: $payableVat, currency: '', stripZeros: true) }}</span>
-                            @if ($accessor->isBGN())
+                            @if ($accessor->usesReportingConversion())
                                 <span
                                     class="d-block text-muted">{{ Prices::readableFormat(price: $payableVatEur, currency: '', stripZeros: true) }}</span>
                             @endif
@@ -168,7 +166,7 @@
                         @if ($netGain != 0.0)
                             <span
                                 class="d-block">{{ Prices::readableFormat(price: $netGain, currency: '', stripZeros: true) }}</span>
-                            @if ($accessor->isBGN())
+                            @if ($accessor->usesReportingConversion())
                                 <span
                                     class="d-block text-muted">{{ Prices::readableFormat(price: $netGainEur, currency: '', stripZeros: true) }}</span>
                             @endif
@@ -201,8 +199,8 @@
                         </span>
                     @elseif ($totalAmount != 0.0)
                         <span class="d-block">{{ $item->currencyType?->code }}</span>
-                        @if ($accessor->isBGN())
-                            <span class="d-block text-muted">EUR</span>
+                        @if ($accessor->usesReportingConversion())
+                            <span class="d-block text-muted">{{ $reportingCurrencyLabel }}</span>
                         @endif
                     @endif
                 </td>
@@ -226,7 +224,7 @@
                     <ul class="mfw-actions flex-nowrap">
                         <x-mfw::edit-link :route="route('mfw-accounts.invoices.edit', $item)" />
                         <li>
-                            <a href="{{ url('mfw-accounts/pdf/' . $item->hash) }}" target="_blank" class="btn btn-danger"
+                            <a href="{{ route('mfw-accounts.pdf', $item->hash) }}" target="_blank" class="btn btn-danger"
                                 title="PDF" data-bs-toggle="tooltip">
                                 <i class="bi bi-file-earmark-pdf"></i>
                             </a>
@@ -247,7 +245,7 @@
                         <ul class="mfw-actions flex-nowrap">
                             <x-mfw::edit-link :route="route('mfw-accounts.invoices.edit', $d)" />
                             <li>
-                                <a href="{{ url('mfw-accounts/pdf/' . $d->hash) }}" target="_blank"
+                                <a href="{{ route('mfw-accounts.pdf', $d->hash) }}" target="_blank"
                                     class="label label-default flag" title="PDF" data-bs-toggle="tooltip">
                                     <img src="{{ asset('Modules/css/flags/' . $d->pdf_locale . '.png') }}"
                                         alt="" />

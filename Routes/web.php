@@ -21,7 +21,7 @@ $routePrefix = $routePrefix !== '' ? $routePrefix : 'mfw-accounts';
 
 Route::get($routePrefix . '/pdf/{hash?}', function ($hash) {
     return PDF::show($hash);
-});
+})->name('mfw-accounts.pdf');
 
 
 Route::prefix($routePrefix)->middleware(['web', 'auth'])->name('mfw-accounts.')->group(function () {

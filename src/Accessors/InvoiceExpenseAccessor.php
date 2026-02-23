@@ -81,44 +81,49 @@ class InvoiceExpenseAccessor
         return Prices::readableFormat(price: $this->calculateNetProfit(), currency: $this->getCurrencySign());
     }
 
-    public function isBGN(): bool
+    public function usesReportingConversion(): bool
     {
-        return $this->invoice->currency == Invoice::BGN_CURRENCY_ID;
+        return Invoice::usesReportingConversionForCurrency((int) $this->invoice->currency);
     }
 
-    public function convertToEur(float $amount): float
+    public function convertToReportingCurrency(float $amount): float
     {
-        return $amount / Invoice::BGN_TO_EUR_RATE;
+        return Invoice::convertAmountToReporting($amount, (int) $this->invoice->currency);
     }
 
-    public function getExpensesInEur(): float
+    public function getExpensesInReportingCurrency(): float
     {
-        return $this->isBGN() ? $this->convertToEur($this->getExpenses()) : $this->getExpenses();
+        return $this->usesReportingConversion() ? $this->convertToReportingCurrency($this->getExpenses()) : $this->getExpenses();
     }
 
-    public function calculateIncomeInEur(): float
+    public function calculateIncomeInReportingCurrency(): float
     {
-        return $this->isBGN() ? $this->convertToEur($this->calculateIncome()) : $this->calculateIncome();
+        return $this->usesReportingConversion() ? $this->convertToReportingCurrency($this->calculateIncome()) : $this->calculateIncome();
     }
 
-    public function calculateBruteProfitInEur(): float
+    public function calculateBruteProfitInReportingCurrency(): float
     {
-        return $this->isBGN() ? $this->convertToEur($this->calculateBruteProfit()) : $this->calculateBruteProfit();
+        return $this->usesReportingConversion() ? $this->convertToReportingCurrency($this->calculateBruteProfit()) : $this->calculateBruteProfit();
     }
 
-    public function calculateTaxBaseInEur(): float
+    public function calculateTaxBaseInReportingCurrency(): float
     {
-        return $this->isBGN() ? $this->convertToEur($this->calculateTaxBase()) : $this->calculateTaxBase();
+        return $this->usesReportingConversion() ? $this->convertToReportingCurrency($this->calculateTaxBase()) : $this->calculateTaxBase();
     }
 
-    public function calculatePayableVatInEur(): float
+    public function calculatePayableVatInReportingCurrency(): float
     {
-        return $this->isBGN() ? $this->convertToEur($this->calculatePayableVat()) : $this->calculatePayableVat();
+        return $this->usesReportingConversion() ? $this->convertToReportingCurrency($this->calculatePayableVat()) : $this->calculatePayableVat();
     }
 
-    public function calculateNetProfitInEur(): float
+    public function calculateNetProfitInReportingCurrency(): float
     {
-        return $this->isBGN() ? $this->convertToEur($this->calculateNetProfit()) : $this->calculateNetProfit();
+        return $this->usesReportingConversion() ? $this->convertToReportingCurrency($this->calculateNetProfit()) : $this->calculateNetProfit();
+    }
+
+    public function reportingCurrencyLabel(): string
+    {
+        return Invoice::reportingCurrencyLabel();
     }
 
     public function getAvailableInvoicesForAssociation(): Collection

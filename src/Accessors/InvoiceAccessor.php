@@ -12,14 +12,22 @@ class InvoiceAccessor
 
     public function __construct(private readonly Invoice $invoice) {}
 
-    public function isBGN(): bool
+    public function usesReportingConversion(): bool
     {
-        return $this->invoice->currency == Invoice::BGN_CURRENCY_ID;
+        return Invoice::usesReportingConversionForCurrency((int) $this->invoice->currency);
     }
 
-    public function bgnToEur(): float
+    public function totalInReportingCurrency(): float
     {
-        return ($this->invoice->amount + $this->invoice->vat)  / Invoice::BGN_TO_EUR_RATE;
+        return Invoice::convertAmountToReporting(
+            (float) $this->invoice->amount + (float) $this->invoice->vat,
+            (int) $this->invoice->currency,
+        );
+    }
+
+    public function reportingCurrencyLabel(): string
+    {
+        return Invoice::reportingCurrencyLabel();
     }
 
     public function expenses(): float
@@ -27,9 +35,9 @@ class InvoiceAccessor
         return $this->getExpenseAccessor()->getExpenses();
     }
 
-    public function expensesInEur(): float
+    public function expensesInReportingCurrency(): float
     {
-        return $this->getExpenseAccessor()->getExpensesInEur();
+        return $this->getExpenseAccessor()->getExpensesInReportingCurrency();
     }
 
     public function payableVatOnProfit(): float
@@ -37,9 +45,9 @@ class InvoiceAccessor
         return $this->getExpenseAccessor()->calculatePayableVat();
     }
 
-    public function payableVatOnProfitInEur(): float
+    public function payableVatOnProfitInReportingCurrency(): float
     {
-        return $this->getExpenseAccessor()->calculatePayableVatInEur();
+        return $this->getExpenseAccessor()->calculatePayableVatInReportingCurrency();
     }
 
     public function netGain(): float
@@ -47,9 +55,9 @@ class InvoiceAccessor
         return $this->getExpenseAccessor()->calculateNetProfit();
     }
 
-    public function netGainInEur(): float
+    public function netGainInReportingCurrency(): float
     {
-        return $this->getExpenseAccessor()->calculateNetProfitInEur();
+        return $this->getExpenseAccessor()->calculateNetProfitInReportingCurrency();
     }
 
     private function getExpenseAccessor(): InvoiceExpenseAccessor

@@ -16,7 +16,7 @@
 
     @php
         $currency = $invoice->currencyType ?: $currencies?->firstWhere('id', $invoice->currency);
-        $currencyLabel = $currency?->symbol ?? $currency?->code ?? 'BGN';
+        $currencyLabel = $currency?->symbol ?? $currency?->code ?? \MetaFramework\Accounts\Models\Invoice::reportingCurrencyLabel();
         $isDetailed = $invoice->details && $invoice->details->isNotEmpty();
         $amountTotalCents = 0;
 

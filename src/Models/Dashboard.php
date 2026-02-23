@@ -16,19 +16,15 @@ class Dashboard extends Model
 
     protected $table = 'mfw_accounts_clients';
 
-    private function euroSumExpression(string $column): string
+    private function reportingSumExpression(string $column): string
     {
-        $bgnId = Invoice::BGN_CURRENCY_ID;
-        $rate = Invoice::BGN_TO_EUR_RATE;
-        $columnExpression = "({$column} / 100.0)";
-
-        return "sum(case when currency = {$bgnId} then {$columnExpression} / {$rate} else {$columnExpression} end)";
+        return Invoice::reportingSqlExpression($column);
     }
 
-    private function sumInEur(Builder $query): object
+    private function sumInReportingCurrency(Builder $query): object
     {
-        $amountExpression = $this->euroSumExpression('amount');
-        $vatExpression = $this->euroSumExpression('vat');
+        $amountExpression = $this->reportingSumExpression('amount');
+        $vatExpression = $this->reportingSumExpression('vat');
 
         return (clone $query)
             ->toBase()
@@ -65,7 +61,7 @@ class Dashboard extends Model
         $turnover = [];
         foreach ($grouped as $key => $virgo) {
             $query = Invoice::whereIn('account_id', $virgo->pluck('id'))->filters($filters)->whereNull('duplicata');
-            $totals = $this->sumInEur($query);
+            $totals = $this->sumInReportingCurrency($query);
             $turnover[$key] = [
                 'amount' => (float) ($totals->amount ?? 0),
                 'vat' => (float) ($totals->vat ?? 0),
@@ -83,8 +79,8 @@ class Dashboard extends Model
 
     public function turnover(bool $export = false, array $filters = []): SupportCollection
     {
-        $amountExpression = $this->euroSumExpression('amount');
-        $vatExpression = $this->euroSumExpression('vat');
+        $amountExpression = $this->reportingSumExpression('amount');
+        $vatExpression = $this->reportingSumExpression('vat');
 
         $query = Invoice::query()
             ->whereNull('duplicata')
@@ -109,8 +105,8 @@ class Dashboard extends Model
         $operative_turnover = [];
 
         foreach ($years as $item) {
-            $amountExpression = $this->euroSumExpression('amount');
-            $vatExpression = $this->euroSumExpression('vat');
+            $amountExpression = $this->reportingSumExpression('amount');
+            $vatExpression = $this->reportingSumExpression('vat');
 
             $query = Invoice::query()
                 ->whereNull('duplicata')

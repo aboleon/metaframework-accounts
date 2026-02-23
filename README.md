@@ -4,157 +4,52 @@ Accounts and invoices package for MetaFramework-based Laravel applications.
 
 ## What this package provides
 
-- Accounts / clients management
-- Invoices management
-- Cashflow reference data and related accounting tables
-- Package routes, views, translations, migrations, and public assets
+- Accounts / clients management with multi-address support and Google Places integration
+- Invoices management with line items, PDF generation, email dispatch, and Excel export
+- Expense tracking linked to invoices with net gain computation
+- Payment methods, bank accounts, and cashflow ledger
+- Currency and VAT management
+- Company information management (translatable)
+- Admin dashboard with multi-currency financial reporting
+- Optional customer-facing login portal (front account skeleton)
 
-## Installation
-
-Install the package in your Laravel app (or use your local path repository setup).
+## Quick Start
 
 ```bash
 composer require aboleon/metaframework-accounts
-```
-
-Laravel package discovery registers:
-
-- `MetaFramework\Accounts\Providers\AccountsServiceProvider`
-
-## Publishable resources
-
-### Config
-
-Publish the package config file:
-
-```bash
-php artisan vendor:publish --tag=mfw-accounts-config
-```
-
-Published file:
-
-- `config/mfw-accounts.php`
-
-Current config options:
-
-- `route_prefix` (default: `mfw-accounts`)
-
-Example:
-
-```php
-<?php
-
-return [
-    'route_prefix' => 'mfw-accounts',
-];
-```
-
-### Assets
-
-Publish package public assets:
-
-```bash
-php artisan vendor:publish --tag=mfw-accounts-assets
-```
-
-Assets are published to:
-
-- `public/vendor/mfw-accounts`
-
-### Views (optional override)
-
-```bash
-php artisan vendor:publish --tag=mfw-accounts-views
-```
-
-Published to:
-
-- `resources/views/modules/mfw-accounts`
-
-### Translations (optional override)
-
-```bash
-php artisan vendor:publish --tag=mfw-accounts-translations
-```
-
-Published to:
-
-- `lang/modules/mfw-accounts`
-
-### Front Account Skeleton (optional)
-
-This package owns the front account login/dashboard skeleton publishables (controllers, middleware, request, routes, and starter views).
-
-Publish files only:
-
-```bash
-php artisan vendor:publish --provider="MetaFramework\\Accounts\\Providers\\AccountsServiceProvider" --tag="mfw-accounts-front"
-```
-
-Or publish + wire routes/auth guard automatically:
-
-```bash
-php artisan mfw-accounts:front
-```
-
-The installer command:
-
-- publishes the front account skeleton files into the app root
-- adds `require __DIR__ . '/account.php';` to `routes/web.php` (if missing)
-- ensures `config/auth.php` contains `account` guard/provider/password broker entries
-
-Published files include:
-
-- `app/Http/Controllers/Front/Account/AccountAuthController.php`
-- `app/Http/Controllers/Front/Account/AccountPortalController.php`
-- `app/Http/Requests/Front/Account/AccountLoginRequest.php`
-- `app/Http/Middleware/Front/AccountLocale.php`
-- `app/Http/Middleware/Front/AccountLoginLocale.php`
-- `routes/account.php`
-- `resources/views/front/account/login.blade.php`
-- `resources/views/front/account/dashboard.blade.php`
-
-## Routes
-
-The package loads web routes from:
-
-- `Routes/web.php`
-
-There is no package API routes file.
-
-The URL prefix is configurable through:
-
-- `config('mfw-accounts.route_prefix')`
-
-Default URL prefix:
-
-- `/mfw-accounts`
-
-Route names remain:
-
-- `mfw-accounts.*`
-
-Only the URL path prefix changes when `route_prefix` changes.
-
-## Migrations and table names
-
-The package ships migrations that create static tables named with the `mfw_accounts_` prefix, for example:
-
-- `mfw_accounts_invoices`
-- `mfw_accounts_accounts`
-- `mfw_accounts_currencies`
-
-Run package migrations only when you explicitly want to create these tables in the host application:
-
-```bash
 php artisan migrate
 ```
 
-If your host application currently uses legacy `thesaurus_*` tables, handle the rename/data migration in the host project with a dedicated migration. Do not change package migrations to target host-specific legacy table names.
+Laravel package discovery registers `MetaFramework\Accounts\Providers\AccountsServiceProvider` automatically.
+
+---
+
+## Table of Contents
+
+| Topic | Description |
+|-------|-------------|
+| [Installation](docs/installation.md) | Requirements, Composer install, running migrations, dependency list |
+| [Configuration](docs/configuration.md) | Publishing the config file and available options |
+| [Publishing](docs/publishing.md) | All publish tags: config, assets, views, translations, front account skeleton |
+| [Accounts](docs/accounts.md) | Account model, addresses, business data, controller actions, account search component |
+| [Invoices](docs/invoices.md) | Invoice model, line items, document types, CRUD, PDF, email, Excel export |
+| [Expenses](docs/expenses.md) | Expense associations, net gain computation, editability rules, Blade components |
+| [Payments](docs/payments.md) | Payment methods, channels, bank accounts, cashflow ledger |
+| [Currencies & VAT](docs/currencies-vat.md) | Currency model, reporting conversion, VAT rates and defaults |
+| [Company](docs/company.md) | Company legal info, translatable data, bank account details |
+| [Dashboard](docs/dashboard.md) | Turnover metrics, client stats, year filter, multi-currency handling |
+| [Front Account](docs/front-account.md) | Customer portal installation, published files, auth guard, routes |
+| [Routes](docs/routes.md) | Full route table with methods, URIs, names, and controllers |
+| [Database](docs/database.md) | Full table reference grouped by domain, column types, foreign keys |
+| [Translations](docs/translations.md) | Supported locales, file structure, publishing, and usage |
+
+---
 
 ## Notes for integration
 
-- This package keeps its own table naming (`mfw_accounts_*`).
+- Table names use the `mfw_accounts_*` prefix.
 - Asset URLs are expected under `public/vendor/mfw-accounts`.
-- Route prefix is configurable; route names are stable (`mfw-accounts.*`).
-- Front account skeleton publish tag is `mfw-accounts-front` (legacy alias `mfw-account` is kept for BC).
+- Route prefix is configurable via `config('mfw-accounts.route_prefix')`; route names are stable (`mfw-accounts.*`).
+- The front account skeleton (`mfw-accounts-front` tag or `php artisan mfw-accounts:front`) is optional and must be explicitly installed.
+- Backward-compatibility alias: the tag `mfw-account` (without trailing `s`) maps to the same skeleton.
+- Legacy `thesaurus_*` table renames must be handled in the host application; do not modify package migrations.
