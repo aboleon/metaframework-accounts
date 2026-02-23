@@ -3,6 +3,10 @@
 return [
     'route_prefix' => 'mfw-accounts',
 
+    'client' => [
+        'default_civility' => 'A',
+    ],
+
     // Host app policy for new invoices.
     'invoice' => [
         'default_currency_id' => 1,

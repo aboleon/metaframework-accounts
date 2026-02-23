@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Models;
 
-use App\Models\AccountUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use MetaFramework\Polyglote\Interfaces\TranslatableInterface;
+use MetaFramework\Accounts\Support\DateFormat;
 
 final class Account extends AccountUser implements TranslatableInterface
 {
@@ -91,8 +91,8 @@ final class Account extends AccountUser implements TranslatableInterface
             return $query;
         }
 
-        $date1 = \App\Helpers\Helpers::kvasir_dateFormat((string)$date, 'd/m/Y', 'Y-m-d');
-        $date2 = \App\Helpers\Helpers::kvasir_dateFormat((string)$date2, 'd/m/Y', 'Y-m-d');
+        $date1 = DateFormat::convert((string) $date, 'd/m/Y', 'Y-m-d');
+        $date2 = DateFormat::convert((string) $date2, 'd/m/Y', 'Y-m-d');
 
         if (!is_null($date1)) {
             match ($operator) {

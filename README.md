@@ -55,5 +55,6 @@ Laravel package discovery registers `MetaFramework\Accounts\Providers\AccountsSe
 - Asset URLs are expected under `public/vendor/mfw-accounts`.
 - Route prefix is configurable via `config('mfw-accounts.route_prefix')`; route names are stable (`mfw-accounts.*`).
 - The front account skeleton (`mfw-accounts-front` tag or `php artisan mfw-accounts:front`) is optional and must be explicitly installed.
+- User type segregation config (`config/mfw-user-types.php`) is owned/published by this package via the `mfw-user-types` tag.
 - Backward-compatibility alias: the tag `mfw-account` (without trailing `s`) maps to the same skeleton.
 - Legacy host table renames/migrations must be handled in the host application; do not modify package migrations.

@@ -24,9 +24,10 @@ php artisan mfw-accounts:front
 
 This command:
 
-1. Publishes all skeleton files into the application.
-2. Adds `require __DIR__ . '/account.php';` to `routes/web.php` (if not already present).
-3. Adds the following entries to `config/auth.php`:
+1. Publishes `config/mfw-user-types.php` (user type segregation: `system` / `account`).
+2. Publishes all skeleton files into the application.
+3. Adds `require __DIR__ . '/account.php';` to `routes/web.php` (if not already present).
+4. Adds the following entries to `config/auth.php`:
 
 **Guard:**
 ```php

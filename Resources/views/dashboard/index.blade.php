@@ -25,7 +25,7 @@ $i=0; $ccolors = count($backgroundColor);
 $between_dates = (!request()->has('date_operator') or (request()->has('date_operator') && request()->date_operator == 'between'));
 @endphp
 
-{{-- $data ? \App\Helpers\Helpers::kvasir_dateFormat($data->invoice_date, 'Y-m-d', 'd/m/Y') : null --}}
+{{-- $data ? \MetaFramework\Accounts\Support\DateFormat::convert((string) $data->invoice_date, 'Y-m-d', 'd/m/Y') : null --}}
 <div class="row">
     <div class="col-md-6 col-sm-6">
         <div class="card shadow-sm mb-4">
@@ -153,8 +153,8 @@ $between_dates = (!request()->has('date_operator') or (request()->has('date_oper
                         @if (request()->filled('date_operator'))
                         {{ (request()->date_operator == 'greater' && !$between_dates ? ' > ' : null) }}
                         {{ (request()->date_operator == 'less' && !$between_dates ? ' > ' : null) }}
-                        {!! request()->filled('date') ? \App\Helpers\Helpers::kvasir_dateFormat(request()->date, 'd/m/Y', 'd/m/Y') : null !!}
-                        {!! ($between_dates && request()->filled('date2')) ? ' - '. \App\Helpers\Helpers::kvasir_dateFormat(request()->date2, 'd/m/Y', 'd/m/Y') : null !!}
+                        {!! request()->filled('date') ? \MetaFramework\Accounts\Support\DateFormat::convert((string) request()->date, 'd/m/Y', 'd/m/Y') : null !!}
+                        {!! ($between_dates && request()->filled('date2')) ? ' - '. \MetaFramework\Accounts\Support\DateFormat::convert((string) request()->date2, 'd/m/Y', 'd/m/Y') : null !!}
                         @else
                         01/11/{{ (date('Y')-1) }} - 31/10/{{ date('Y') }}
                         @endif

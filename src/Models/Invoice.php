@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use MetaFramework\Casts\Datepicker;
 use MetaFramework\Casts\NullablePriceInteger;
 use MetaFramework\Casts\PriceInteger;
+use MetaFramework\Accounts\Support\DateFormat;
 use MetaFramework\Traits\Locale;
 
 /**
@@ -290,7 +291,7 @@ class Invoice extends Model
             return $value;
         }
 
-        $normalized = \App\Helpers\Helpers::kvasir_dateFormat($value, 'd/m/Y', 'Y-m-d');
+        $normalized = DateFormat::convert($value, 'd/m/Y', 'Y-m-d');
 
         return $normalized ?: null;
     }

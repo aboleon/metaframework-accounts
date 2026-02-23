@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use MetaFramework\Support\Traits\Ajax;
@@ -13,7 +12,7 @@ use MetaFramework\Accounts\Actions\InvoiceActions;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\Invoice;
 
-class AjaxController extends Controller
+class AjaxController
 {
     use Ajax;
 

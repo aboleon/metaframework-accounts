@@ -35,7 +35,7 @@
                                     'B' => __('mfw-accounts::ui.civ.Mme'),
                                     'A' => __('mfw-accounts::ui.civ.M'),
                                 ]"
-                                    :affected="old('civ', $data->civ ?: \App\Enum\Civility::default())" />
+                                    :affected="old('civ', $data->civ ?: config('mfw-accounts.client.default_civility', 'A'))" />
                             </div>
                             <div class="col-md-6">
                                 <x-mfw-inputable::select :label="__('ui.lg')" name="locale" :affected="$data->locale ?: app()->getLocale()"

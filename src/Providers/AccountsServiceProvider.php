@@ -19,6 +19,7 @@ class AccountsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../../Config/mfw-accounts.php', 'mfw-accounts');
+        $this->mergeConfigFrom(__DIR__ . '/../../publishables/config/mfw-user-types.php', 'mfw-user-types');
     }
 
     public function boot(): void
@@ -39,6 +40,14 @@ class AccountsServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../../Config/mfw-accounts.php' => config_path('mfw-accounts.php'),
             ], 'mfw-accounts-config');
+
+            $this->publishes([
+                __DIR__ . '/../../publishables/config/mfw-user-types.php' => config_path('mfw-user-types.php'),
+            ], 'mfw-user-types');
+
+            $this->publishes([
+                __DIR__ . '/../../publishables/config/mfw-user-types.php' => config_path('mfw-user-types.php'),
+            ], 'mfw-accounts-user-types');
 
             $this->publishes([
                 __DIR__ . '/../../Resources/views' => resource_path('views/modules/mfw-accounts'),

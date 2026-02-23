@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +19,7 @@ use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Services\GooglePlacesTranslator;
 use MetaFramework\Services\Validation\ValidationInstance;
 
-class AccountController extends Controller
+class AccountController
 {
     public function index(Request $request): View
     {

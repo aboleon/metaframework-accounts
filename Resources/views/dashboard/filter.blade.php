@@ -13,8 +13,8 @@
                     "greater"=>'>',
                     "less"=>'<'
                     ]) !!}
-                    <input type="text" name="date" value="{!! request()->filled('date') ? \App\Helpers\Helpers::kvasir_dateFormat(request()->date, 'd/m/Y', 'd/m/Y') : null !!}" class="date form-control" style="padding: 2px">
-                    <input type="text" name="date2" value="{!! ($between_dates && request()->filled('date2')) ? \App\Helpers\Helpers::kvasir_dateFormat(request()->date2, 'd/m/Y', 'd/m/Y') : null !!}" class="{{ !$between_dates ? 'hidden':null}} date form-control" style="padding: 2px">
+                    <input type="text" name="date" value="{!! request()->filled('date') ? \MetaFramework\Accounts\Support\DateFormat::convert((string) request()->date, 'd/m/Y', 'd/m/Y') : null !!}" class="date form-control" style="padding: 2px">
+                    <input type="text" name="date2" value="{!! ($between_dates && request()->filled('date2')) ? \MetaFramework\Accounts\Support\DateFormat::convert((string) request()->date2, 'd/m/Y', 'd/m/Y') : null !!}" class="{{ !$between_dates ? 'hidden':null}} date form-control" style="padding: 2px">
                 </td>
                 <td style="padding-left: 8px">
                     <button class="btn-primary btn btn-sm">{!! __('ui.filters.label') !!}</button>

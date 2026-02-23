@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +20,7 @@ use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Accounts\Models\InvoiceStructure;
 use MetaFramework\Services\Validation\ValidationInstance;
 
-class InvoiceController extends Controller
+class InvoiceController
 {
     public function index(): View
     {

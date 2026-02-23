@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\RedirectResponse;
 use MetaFramework\Accounts\Http\Requests\SavePayMeanRequest;
@@ -14,7 +13,7 @@ use MetaFramework\Services\Validation\ValidationInstance;
 use MetaFramework\Support\Traits\Responses;
 use Throwable;
 
-class PayMeanController extends Controller
+class PayMeanController
 {
     use Responses;
 

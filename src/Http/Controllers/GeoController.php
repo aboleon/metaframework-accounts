@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\View\View;
 use MetaFramework\Accounts\Models\AccountAddress;
 
-class GeoController extends Controller
+class GeoController
 {
     public function index(): View
     {

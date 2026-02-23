@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Mailer;
 
-use App\Mailer\Traits\MailableCommons;
 use MetaFramework\Mailer\Mailer\MailerAbstract;
+use MetaFramework\Accounts\Mailer\Concerns\MailableCommons;
 use MetaFramework\Accounts\Models\Invoice as InvoiceModel;
 
 class Invoice extends MailerAbstract

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +18,7 @@ use MetaFramework\Support\Traits\Responses;
 use Project;
 use Throwable;
 
-class PayMeansChannelController extends Controller
+class PayMeansChannelController
 {
     use Responses;
 

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use MetaFramework\Accounts\Models\Dashboard;
 
-class DashboardController extends Controller
+class DashboardController
 {
     public function index(Request $request): View
     {

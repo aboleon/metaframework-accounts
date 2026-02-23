@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use MetaFramework\Support\UserTypes;
 
 class AccountLoginRequest extends FormRequest
 {
@@ -31,10 +32,10 @@ class AccountLoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $credentials = [
+        $credentials = UserTypes::addToCredentials([
             'email' => Str::lower((string) $this->input('email')),
             'password' => (string) $this->input('password'),
-        ];
+        ], 'account');
 
         if (! Auth::guard('account')->attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());

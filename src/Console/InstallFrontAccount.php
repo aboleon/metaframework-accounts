@@ -21,6 +21,12 @@ class InstallFrontAccount extends Command
 
         $this->call('vendor:publish', [
             '--provider' => 'MetaFramework\\Accounts\\Providers\\AccountsServiceProvider',
+            '--tag' => 'mfw-user-types',
+        ]);
+        $this->ensureUserTypesConfiguration();
+
+        $this->call('vendor:publish', [
+            '--provider' => 'MetaFramework\\Accounts\\Providers\\AccountsServiceProvider',
             '--tag' => 'mfw-accounts-front',
         ]);
 
@@ -72,6 +78,60 @@ class InstallFrontAccount extends Command
         }
 
         File::put($routeFilePath, $updatedContent);
+    }
+
+    private function ensureUserTypesConfiguration(): void
+    {
+        $targetPath = config_path('mfw-user-types.php');
+        $sourcePath = __DIR__ . '/../../publishables/config/mfw-user-types.php';
+
+        if (! File::exists($sourcePath)) {
+            $this->warn('Package mfw-user-types config template was not found; skipping user types config repair.');
+
+            return;
+        }
+
+        if (! File::exists($targetPath)) {
+            File::ensureDirectoryExists(dirname($targetPath));
+            File::copy($sourcePath, $targetPath);
+            $this->info('Published config/mfw-user-types.php');
+
+            return;
+        }
+
+        $existingContent = File::get($targetPath);
+
+        if (! $this->mfwUserTypesConfigNeedsRepair($existingContent)) {
+            return;
+        }
+
+        File::put($targetPath, File::get($sourcePath));
+        $this->warn('Repaired config/mfw-user-types.php to the package-owned SYSTEM/ACCOUNT definition.');
+    }
+
+    private function mfwUserTypesConfigNeedsRepair(string $content): bool
+    {
+        if (str_contains($content, 'App\\Enum\\UserType')) {
+            return true;
+        }
+
+        $requiredFragments = [
+            'use MetaFramework\\Accounts\\Enum\\UserType;',
+            "'column' => 'type'",
+            "'default' => UserType::default()",
+            'UserType::SYSTEM->value',
+            'UserType::ACCOUNT->value',
+            "'web' => UserType::SYSTEM->value",
+            "'account' => UserType::ACCOUNT->value",
+        ];
+
+        foreach ($requiredFragments as $fragment) {
+            if (! str_contains($content, $fragment)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function ensureAccountGuardConfiguration(): void

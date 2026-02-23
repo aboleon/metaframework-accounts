@@ -5,6 +5,7 @@
 | Tag | Command | Destination |
 |-----|---------|-------------|
 | `mfw-accounts-config` | `vendor:publish --tag=mfw-accounts-config` | `config/mfw-accounts.php` |
+| `mfw-user-types` | `vendor:publish --tag=mfw-user-types` | `config/mfw-user-types.php` |
 | `mfw-accounts-assets` | `vendor:publish --tag=mfw-accounts-assets` | `public/vendor/mfw-accounts/` |
 | `mfw-accounts-views` | `vendor:publish --tag=mfw-accounts-views` | `resources/views/modules/mfw-accounts/` |
 | `mfw-accounts-translations` | `vendor:publish --tag=mfw-accounts-translations` | `lang/modules/mfw-accounts/` |
@@ -15,7 +16,15 @@
 php artisan vendor:publish --tag=mfw-accounts-config
 ```
 
-Publishes the single config file. See [Configuration](configuration.md) for available options.
+Publishes the package config file. See [Configuration](configuration.md) for available options.
+
+## User Types Config (`mfw-user-types`)
+
+```bash
+php artisan vendor:publish --tag=mfw-user-types
+```
+
+Publishes `config/mfw-user-types.php`, which defines the `system/account` user type segregation used by the accounts package and MetaFramework typed-user helpers.
 
 ## Assets
 
@@ -61,8 +70,9 @@ php artisan mfw-accounts:front
 
 In addition to publishing the files, this command:
 
-1. Adds `require __DIR__ . '/account.php';` to `routes/web.php` (if not already present).
-2. Ensures `config/auth.php` contains an `account` guard, `accounts` provider, and `accounts` password broker.
+1. Publishes `config/mfw-user-types.php` (if not already present).
+2. Adds `require __DIR__ . '/account.php';` to `routes/web.php` (if not already present).
+3. Ensures `config/auth.php` contains an `account` guard, `accounts` provider, and `accounts` password broker.
 
 See [Front Account](front-account.md) for the full list of published files and auth configuration details.
 

@@ -11,12 +11,11 @@ use Illuminate\Support\Facades\Cache;
 use MetaFramework\Accounts\Http\Requests\StoreVatRequest;
 use MetaFramework\Accounts\Http\Requests\UpdateVatRequest;
 use MetaFramework\Accounts\Models\Vat;
-use MetaFramework\Controllers\Controller;
 use MetaFramework\Services\Validation\ValidationTrait;
 use MetaFramework\Support\Traits\Responses;
 use Throwable;
 
-class VatController extends Controller
+class VatController
 {
     use Responses;
     use SoftDeletes;

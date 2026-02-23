@@ -1,7 +1,7 @@
 <div class="card">
     <div class="card-body hover" style="padding-bottom: 10px;">
         @php
-            use App\Accessors\AddressAccessor;$address = $client->address->first();
+            use MetaFramework\Accounts\Accessors\AddressAccessor;$address = $client->address->first();
         @endphp
         <div>
             {{ $client->first_name . ' ' . $client->last_name }}

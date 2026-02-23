@@ -99,7 +99,7 @@
 
     @if (!empty($data->attached_to))
         <div class="sub">
-            {{ __('mfw-accounts::ui.attachedTo') . ' ' . __('mfw-accounts::ui.docType1') . ' N° 0' . sprintf('%09d', $data->attachedTo->document_id) . ' ' . __('mfw-accounts::ui.from') . ' ' . \App\Helpers\Helpers::kvasir_dateFormat($data->attachedTo->invoice_date, 'Y-m-d', 'd.m.Y') }}
+            {{ __('mfw-accounts::ui.attachedTo') . ' ' . __('mfw-accounts::ui.docType1') . ' N° 0' . sprintf('%09d', $data->attachedTo->document_id) . ' ' . __('mfw-accounts::ui.from') . ' ' . \MetaFramework\Accounts\Support\DateFormat::convert((string) $data->attachedTo->invoice_date, 'Y-m-d', 'd.m.Y') }}
         </div>
     @endif
 
@@ -204,14 +204,12 @@
                     $sw = null;
                     $n = intval($w[0]);
 
-                    $j = new \App\Helpers\Numbers\Words\Locale\bg();
-
-                    $sw .= $j->toWords($n, 'bg') . ' ' . (abs($n) > 1 ? 'лева' : (abs($n) == 0 ? 'лева' : 'лев'));
+                    $sw .= \MetaFramework\Accounts\Support\BulgarianWords::toWords($n) . ' ' . (abs($n) > 1 ? 'лева' : (abs($n) == 0 ? 'лева' : 'лев'));
 
                     if (!empty($w[1])) {
                         $n = intval($w[1]);
                         if (!empty($n)) {
-                            $sw .= ' и ' . $j->toWords($n, 'bg', ['cents' => true]) . ' ' . trans_choice('mfw-accounts::ui.cents', $n > 1 ? 2 : 1);
+                            $sw .= ' и ' . \MetaFramework\Accounts\Support\BulgarianWords::toWords($n, true) . ' ' . trans_choice('mfw-accounts::ui.cents', $n > 1 ? 2 : 1);
                         }
                     }
 
