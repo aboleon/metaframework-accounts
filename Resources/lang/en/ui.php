@@ -112,6 +112,7 @@ return [
     'DatePrefixAt' => 'at',
     'Description' => 'Description',
     'Name' => 'Name',
+    'title' => 'Title',
     'Location' => 'Location|Locations',
     'NewCientAccountBtn' => 'Create a new client account',
     'BtnClose' => 'Close',

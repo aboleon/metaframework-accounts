@@ -47,7 +47,7 @@
             @if ($data)
                 <div class="d-flex align-items-center gap-2">
 
-                    <img src="{{ asset('Modules/css/flags/' . $data->pdf_locale . '.png') }}" class="me-1"
+                    <img src="{{ asset('vendor/mfw/flags/' . $data->pdf_locale . '.svg') }}" class="me-1"
                         style="max-height: 20px; border:1px solid white" alt="" />
 
                     <a href="{!! url('mfw-accounts/pdf/' . $data->hash) !!}" target="_blank" data-bs-toggle="tooltip" data-bs-placement="top"
@@ -356,8 +356,7 @@
                     <div id="expenses-edit-col" class="{{ $showExpensesSummary ? 'col-12 col-lg-6' : 'col-12' }}">
                         <x-mfw-accounts::expenses-edit :invoice="$data" :expenseAccessor="$expenseAccessor" />
                     </div>
-                    <div id="expenses-summary-col"
-                        class="col-12 col-lg-6{{ $showExpensesSummary ? '' : ' d-none' }}">
+                    <div id="expenses-summary-col" class="col-12 col-lg-6{{ $showExpensesSummary ? '' : ' d-none' }}">
                         @if ($showExpensesSummary)
                             <x-mfw-accounts::expenses-summary :invoice="$data" :expenseAccessor="$expenseAccessor" />
                         @endif

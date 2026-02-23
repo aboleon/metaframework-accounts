@@ -93,3 +93,5 @@ class CashflowDocTypes extends Model implements TranslatableInterface
         return $this->hasMany(Invoice::class, 'doc_type');
     }
 }
+
+

@@ -127,3 +127,5 @@ class Dashboard extends Model
         return $operative_turnover;
     }
 }
+
+

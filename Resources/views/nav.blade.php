@@ -17,3 +17,5 @@
         <span>{!! Str::ucfirst(trans_choice('mfw-accounts::ui.invoice', 2)) !!}</span>
     </a>
 </li>
+
+

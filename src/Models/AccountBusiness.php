@@ -34,3 +34,5 @@ class AccountBusiness extends Model implements TranslatableInterface
         return $this->belongsTo(Account::class, 'user_id');
     }
 }
+
+

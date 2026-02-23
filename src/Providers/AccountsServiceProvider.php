@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Providers;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Translation\Translator;
 use MetaFramework\Accounts\Console\InstallFrontAccount;
 use MetaFramework\Accounts\Models\Currency;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Throwable;
 
 class AccountsServiceProvider extends ServiceProvider
@@ -53,9 +57,7 @@ class AccountsServiceProvider extends ServiceProvider
                 __DIR__ . '/../../Resources/views' => resource_path('views/modules/mfw-accounts'),
             ], 'mfw-accounts-views');
 
-            $this->publishes([
-                __DIR__ . '/../../Resources/lang' => lang_path('modules/mfw-accounts'),
-            ], 'mfw-accounts-translations');
+            $this->publishes($this->translationPublishPaths(), 'mfw-accounts-translations');
 
             $this->publishes([
                 __DIR__ . '/../../Resources/public' => public_path('vendor/mfw-accounts'),
@@ -88,15 +90,15 @@ class AccountsServiceProvider extends ServiceProvider
 
     protected function registerTranslations(): void
     {
-        $langPath = resource_path('lang/modules/mfw-accounts');
-
-        if (is_dir($langPath)) {
-            $this->loadTranslationsFrom($langPath, 'mfw-accounts');
-
-            return;
-        }
-
         $this->loadTranslationsFrom(__DIR__ . '/../../Resources/lang', 'mfw-accounts');
+
+        $this->callAfterResolving('translator', function ($translator): void {
+            if (!$translator instanceof Translator) {
+                return;
+            }
+
+            $this->loadLocaleFirstTranslationOverrides($translator);
+        });
     }
 
     protected function registerBladeComponents(): void
@@ -119,5 +121,57 @@ class AccountsServiceProvider extends ServiceProvider
         }
 
         View::share('currencies', $currencies);
+    }
+
+    private function translationPublishPaths(): array
+    {
+        $sourceRoot = __DIR__ . '/../../Resources/lang';
+        $paths = [];
+
+        foreach (glob($sourceRoot . '/*', GLOB_ONLYDIR) ?: [] as $localeDir) {
+            $locale = basename($localeDir);
+
+            if ($locale === '' || str_starts_with($locale, '.')) {
+                continue;
+            }
+
+            $paths[$localeDir] = lang_path($locale . '/mfw-accounts');
+        }
+
+        return $paths;
+    }
+
+    private function loadLocaleFirstTranslationOverrides(Translator $translator): void
+    {
+        foreach (glob(lang_path('*/mfw-accounts'), GLOB_ONLYDIR) ?: [] as $localePath) {
+            $locale = basename(dirname($localePath));
+            $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($localePath));
+
+            foreach ($iterator as $fileInfo) {
+                if (!$fileInfo->isFile() || $fileInfo->getExtension() !== 'php') {
+                    continue;
+                }
+
+                $fullPath = $fileInfo->getPathname();
+                $relative = str_replace('\\', '/', substr($fullPath, strlen($localePath) + 1));
+                $group = preg_replace('/\.php$/', '', $relative);
+                if (!is_string($group) || $group === '') {
+                    continue;
+                }
+
+                $overrideLines = require $fullPath;
+                if (!is_array($overrideLines)) {
+                    continue;
+                }
+
+                $baseLines = $translator->getLoader()->load($locale, $group, 'mfw-accounts');
+                $mergedLines = array_replace_recursive($baseLines, $overrideLines);
+                $flatLines = Arr::dot($mergedLines, $group . '.');
+
+                if ($flatLines !== []) {
+                    $translator->addLines($flatLines, $locale, 'mfw-accounts');
+                }
+            }
+        }
     }
 }

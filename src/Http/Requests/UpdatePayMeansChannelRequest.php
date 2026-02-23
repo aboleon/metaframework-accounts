@@ -18,9 +18,8 @@ class UpdatePayMeansChannelRequest extends FormRequest
         return [
             'bank_account_id' => 'nullable|integer|exists:mfw_accounts_bank_accounts,id',
             'data' => 'nullable|array',
-            'data.*' => 'nullable|array',
-            'data.*.name' => 'nullable|string',
-            'data.*.description' => 'nullable|string',
+            'data.name' => 'nullable|array',
+            'data.name.*' => 'nullable|string',
         ];
     }
 }

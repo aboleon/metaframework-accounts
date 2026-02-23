@@ -190,3 +190,5 @@
         window['expenses.update'] = window.expenses.update;
     </script>
 @endpushOnce
+
+

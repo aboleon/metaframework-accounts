@@ -112,6 +112,7 @@ return [
     'DatePrefixAt' => 'à',
     'Description' => 'Description',
     'Name' => 'Nom',
+    'title' => 'Intitulé',
     'Location' => 'Localisation|Localisations',
     'NewCientAccountBtn' => 'Créer un nouveau compte client',
     'BtnClose' => 'Fermer',
@@ -278,5 +279,5 @@ return [
     'previous' => 'Précédent',
     'turnoverExport' => 'Chiffre d\'affaires à l\'export',
     'no_pay_means_are_recorded' => 'Няма записани средства за плащане',
-    'numerotation' => 'Numérotation'
+    'numerotation' => 'Numérotation',
 ];

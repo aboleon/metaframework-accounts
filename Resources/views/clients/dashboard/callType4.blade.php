@@ -53,3 +53,5 @@
 <br>
 <div class="pull-right">{!!url('admin/crm/call/add?account_id='.$data['client']['id'].'&callType=1', __('mfw-accounts::ui.NewCallType1'), array('class'=>'btn btn-primary btn-sm'))!!}</div>
 </div></div>
+
+

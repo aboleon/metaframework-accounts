@@ -6,7 +6,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('mfw_accounts_company_data', function (Blueprint $table) {
@@ -35,6 +36,7 @@ return new class extends Migration {
             $table->increments('id');
             $table->unsignedInteger('pay_mean_id')->nullable();
             $table->unsignedInteger('bank_account_id')->nullable();
+            $table->longText('name')->nullable();
 
             $table->index('pay_mean_id', 'FK_mfw_accounts_pay_means_channels_mfw_accounts_pay_means');
             $table->index('bank_account_id', 'FK_mfw_accounts_pay_means_channels_mfw_accounts_bank_accounts');
@@ -50,26 +52,10 @@ return new class extends Migration {
                 ->cascadeOnDelete()
                 ->onUpdate('no action');
         });
-
-        Schema::create('mfw_accounts_pay_means_channels_data', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedInteger('pay_channel_id')->nullable();
-            $table->string('name')->nullable();
-            $table->text('description')->nullable();
-            $table->string('lg', 2)->nullable();
-
-            $table->index('pay_channel_id', 'FK_mfw_accounts_pay_means_channels_data_master');
-            $table->foreign('pay_channel_id', 'FK_mfw_accounts_pay_means_channels_data_master')
-                ->references('id')
-                ->on('mfw_accounts_pay_means_channels')
-                ->cascadeOnDelete()
-                ->onUpdate('no action');
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('mfw_accounts_pay_means_channels_data');
         Schema::dropIfExists('mfw_accounts_pay_means_channels');
         Schema::dropIfExists('mfw_accounts_bank_accounts_data');
         Schema::dropIfExists('mfw_accounts_company_data');

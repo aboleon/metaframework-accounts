@@ -88,3 +88,7 @@ class Invoice extends MailerAbstract
         return __('mfw-accounts::mailer/invoice.failure', [], $this->locale);
     }
 }
+
+
+
+

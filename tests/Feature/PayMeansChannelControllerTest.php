@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use MetaFramework\Accounts\Http\Controllers\PayMeansChannelController;
 use MetaFramework\Accounts\Models\PayMeansChannels;
-use MetaFramework\Accounts\Models\PayMeansChannelsData;
 use MetaFramework\Accounts\Tests\Feature\Concerns\InteractsWithAccountsControllerData;
 use MetaFramework\Accounts\Tests\TestCase;
 
@@ -29,20 +28,13 @@ class PayMeansChannelControllerTest extends TestCase
         $payMeanA = $this->seedPayMean(['name' => ['fr' => 'Virement']]);
         $payMeanB = $this->seedPayMean(['name' => ['fr' => 'Carte']]);
 
-        $channelA = PayMeansChannels::query()->create(['pay_mean_id' => $payMeanA->id]);
-        $channelB = PayMeansChannels::query()->create(['pay_mean_id' => $payMeanB->id]);
-
-        PayMeansChannelsData::query()->create([
-            'pay_channel_id' => $channelA->id,
-            'lg' => 'fr',
-            'name' => 'FR A',
-            'description' => 'Desc A',
+        $channelA = PayMeansChannels::query()->create([
+            'pay_mean_id' => $payMeanA->id,
+            'name' => ['fr' => 'FR A', 'bg' => 'BG A'],
         ]);
-        PayMeansChannelsData::query()->create([
-            'pay_channel_id' => $channelB->id,
-            'lg' => 'fr',
-            'name' => 'FR B',
-            'description' => 'Desc B',
+        $channelB = PayMeansChannels::query()->create([
+            'pay_mean_id' => $payMeanB->id,
+            'name' => ['fr' => 'FR B', 'bg' => 'BG B'],
         ]);
 
         $view = (new PayMeansChannelController)->index($payMeanA->id);
@@ -57,7 +49,7 @@ class PayMeansChannelControllerTest extends TestCase
         $this->assertSame($payMeanA->id, (int) $data['payMeanChannel']->pay_mean_id);
     }
 
-    public function test_store_creates_channel_and_translation_rows_for_all_project_locales(): void
+    public function test_store_creates_channel_without_separate_translation_rows(): void
     {
         $this->actingAs($this->createSystemUser());
         $payMean = $this->seedPayMean(['name' => ['fr' => 'Bank']]);
@@ -71,14 +63,7 @@ class PayMeansChannelControllerTest extends TestCase
         $this->assertNotNull($channel);
         $response->assertRedirect(route('mfw-accounts.pay-mean-channels.edit', $channel));
         $response->assertSessionHas('session_response');
-
-        $translations = PayMeansChannelsData::query()
-            ->where('pay_channel_id', $channel->id)
-            ->orderBy('lg')
-            ->pluck('lg')
-            ->all();
-
-        $this->assertSame(['bg', 'en', 'fr'], $translations);
+        $this->assertNull($channel->getRawOriginal('name'));
     }
 
     public function test_store_validates_category(): void
@@ -97,14 +82,11 @@ class PayMeansChannelControllerTest extends TestCase
     public function test_edit_get_returns_view_with_loaded_channel(): void
     {
         $payMean = $this->seedPayMean(['name' => ['fr' => 'Bank']]);
-        $channel = PayMeansChannels::query()->create(['pay_mean_id' => $payMean->id]);
-        $this->seedBankAccount();
-
-        PayMeansChannelsData::query()->create([
-            'pay_channel_id' => $channel->id,
-            'lg' => 'fr',
-            'name' => 'Channel FR',
+        $channel = PayMeansChannels::query()->create([
+            'pay_mean_id' => $payMean->id,
+            'name' => ['fr' => 'Channel FR', 'bg' => 'Channel BG'],
         ]);
+        $this->seedBankAccount();
 
         $request = Request::create('/fake', 'GET');
         $view = (new PayMeansChannelController)->edit($request, $channel);
@@ -114,7 +96,7 @@ class PayMeansChannelControllerTest extends TestCase
         $this->assertSame($channel->id, $view->getData()['data']->id);
     }
 
-    public function test_edit_post_updates_channel_and_translations(): void
+    public function test_edit_post_updates_channel_and_inline_translatable_name(): void
     {
         $this->actingAs($this->createSystemUser());
         $payMean = $this->seedPayMean(['name' => ['fr' => 'Bank']]);
@@ -124,13 +106,10 @@ class PayMeansChannelControllerTest extends TestCase
         $response = $this->post(route('mfw-accounts.pay-mean-channels.edit', $channel), [
             'bank_account_id' => $bankAccountId,
             'data' => [
-                'fr' => [
-                    'name' => 'Compte FR',
-                    'description' => 'Description FR',
-                ],
-                'bg' => [
-                    'name' => 'BG',
-                    'description' => 'Desc BG',
+                'name' => [
+                    'fr' => 'Compte FR',
+                    'bg' => 'Compte BG',
+                    'en' => 'Account EN',
                 ],
             ],
         ]);
@@ -140,18 +119,8 @@ class PayMeansChannelControllerTest extends TestCase
 
         $channel->refresh();
         $this->assertSame($bankAccountId, (int) $channel->bank_account_id);
-
-        $this->assertSame(3, PayMeansChannelsData::query()->where('pay_channel_id', $channel->id)->count());
-        $this->assertDatabaseHas('mfw_accounts_pay_means_channels_data', [
-            'pay_channel_id' => $channel->id,
-            'lg' => 'fr',
-            'name' => 'Compte FR',
-            'description' => 'Description FR',
-        ]);
-        $this->assertDatabaseHas('mfw_accounts_pay_means_channels_data', [
-            'pay_channel_id' => $channel->id,
-            'lg' => 'en',
-        ]);
+        $this->assertSame('Compte FR', $channel->translation('name', 'fr'));
+        $this->assertSame('Account EN', $channel->translation('name', 'en'));
     }
 
     public function test_edit_post_validates_payload(): void
@@ -164,23 +133,21 @@ class PayMeansChannelControllerTest extends TestCase
             ->post(route('mfw-accounts.pay-mean-channels.edit', $channel), [
                 'bank_account_id' => 99999,
                 'data' => [
-                    'fr' => 'invalid',
+                    'name' => 'invalid',
                 ],
             ]);
 
         $response->assertRedirect(route('mfw-accounts.pay-mean-channels.edit', $channel));
-        $response->assertSessionHasErrors(['bank_account_id', 'data.fr']);
+        $response->assertSessionHasErrors(['bank_account_id', 'data.name']);
     }
 
-    public function test_destroy_deletes_channel_and_translations(): void
+    public function test_destroy_deletes_channel(): void
     {
         $this->actingAs($this->createSystemUser());
         $payMean = $this->seedPayMean(['name' => ['fr' => 'Bank']]);
-        $channel = PayMeansChannels::query()->create(['pay_mean_id' => $payMean->id]);
-        PayMeansChannelsData::query()->create([
-            'pay_channel_id' => $channel->id,
-            'lg' => 'fr',
-            'name' => 'X',
+        $channel = PayMeansChannels::query()->create([
+            'pay_mean_id' => $payMean->id,
+            'name' => ['fr' => 'X'],
         ]);
 
         $response = $this->delete(route('mfw-accounts.pay-mean-channels.destroy', $channel));
@@ -188,6 +155,5 @@ class PayMeansChannelControllerTest extends TestCase
         $response->assertRedirect(route('mfw-accounts.pay-mean-channels.index', ['payMean' => $payMean->id]));
         $response->assertSessionHas('session_response');
         $this->assertDatabaseMissing('mfw_accounts_pay_means_channels', ['id' => $channel->id]);
-        $this->assertDatabaseMissing('mfw_accounts_pay_means_channels_data', ['pay_channel_id' => $channel->id]);
     }
 }

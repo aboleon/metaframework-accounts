@@ -4,27 +4,31 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Models;
 
-
 use Illuminate\Database\Eloquent\Model;
-use MetaFramework\Traits\Locale;
+use MetaFramework\Polyglote\Interfaces\TranslatableInterface;
+use MetaFramework\Polyglote\Traits\Translation;
 
-final class PayMeansChannels extends Model
+final class PayMeansChannels extends Model implements TranslatableInterface
 {
-
-    use Locale;
+    use Translation;
 
     public $table = 'mfw_accounts_pay_means_channels';
+
     public $timestamps = false;
-    protected $guarded = [];
 
-    public function translation()
-    {
-        return $this->hasOne(PayMeansChannelsData::class, 'pay_channel_id')->where('lg', $this->locale());
-    }
+    protected $fillable = [
+        'pay_mean_id',
+        'bank_account_id',
+        'name',
+    ];
 
-    public function translations()
+    public function setTranslatables(): array
     {
-        return $this->hasMany(PayMeansChannelsData::class, 'pay_channel_id');
+        return [
+            'name' => [
+                'label' => __('mfw-accounts::ui.title'),
+            ],
+        ];
     }
 
     public function master()
@@ -32,3 +36,4 @@ final class PayMeansChannels extends Model
         return $this->belongsTo(PayMeans::class, 'pay_mean_id');
     }
 }
+

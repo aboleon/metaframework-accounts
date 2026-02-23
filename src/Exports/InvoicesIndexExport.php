@@ -82,3 +82,5 @@ class InvoicesIndexExport implements FromArray, WithHeadings, WithStyles, WithTi
         return $rows;
     }
 }
+
+

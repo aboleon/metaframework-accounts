@@ -54,3 +54,5 @@ final class PayMeans extends Model implements TranslatableInterface
         return $this->hasMany(PayMeansChannels::class, 'pay_mean_id');
     }
 }
+
+

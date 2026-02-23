@@ -284,3 +284,5 @@ $between_dates = (!request()->has('date_operator') or (request()->has('date_oper
 @include('mfw-accounts::clients.charts')
 <script src="{!! asset('vendor/mfw-accounts/js/filters.js') !!}"></script>
 @endpush
+
+

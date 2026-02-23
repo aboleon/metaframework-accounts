@@ -9,12 +9,6 @@
   php artisan migrate:rollback  - Rollback migrations
 - `composer test` or `phpunit` — run the automated test suite.
 
-# Module management
-php artisan module:list        # List all modules
-php artisan module:make Name   # Create new module
-php artisan module:enable Name # Enable module
-php artisan module:disable Name # Disable module
-php artisan module:make-migration exampleOfMigration ModuleName #migration name must be snakeCase
 
 ## Coding Style & Naming Conventions
 - PHP: follow PSR-12; 4-space indentation. Use type hints and return types where possible.
@@ -72,7 +66,6 @@ Key config files:
 
 - Provider: MariaDB, 11.3
 - Sessions, queue, and cache are database-backed
-- Module migrations auto-discovered via `config/modules.php`
 
 ### Package Dependencies
 

@@ -51,3 +51,5 @@ class AccountSearch extends Component
         return view('mfw-accounts::components.accountsearch');
     }
 }
+
+

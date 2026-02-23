@@ -94,7 +94,10 @@
                 $expenseAssociationProtocol = $expense_association_protocols[$item->id] ?? null;
                 $totalAmount = $item->amount + $item->vat;
                 $netGain = $item->net_gain ?? 0.0;
-                $netGainEur = \MetaFramework\Accounts\Models\Invoice::convertAmountToReporting($netGain, (int) $item->currency);
+                $netGainEur = \MetaFramework\Accounts\Models\Invoice::convertAmountToReporting(
+                    $netGain,
+                    (int) $item->currency,
+                );
                 $payableVat = $netGain > 0.0 ? $netGain * 0.2 : 0.0;
                 $payableVatEur = $netGain > 0.0 ? $netGainEur * 0.2 : 0.0;
                 $associatedInvoices = $item->expenseAssociatedInvoices
@@ -118,7 +121,9 @@
                             <a href="{{ route('mfw-accounts.clients.dashboard', $item->account_id) }}">
                                 {{ new AccountAccessor($item->client)->shortName() }}
                             </a>
-                            {!! $item->client->isCompany() ? '<span class="label-company">' . __('mfw-accounts::ui.Company') . '</span>' : null !!}
+                            {!! $item->client->isCompany()
+                                ? '<span class="label-company">' . __('mfw-accounts::ui.Company') . '</span>'
+                                : null !!}
                         </div>
                     @else
                         <span class="text-muted">{{ __('mfw-accounts::ui.deleted_client') }}</span>
@@ -247,8 +252,7 @@
                             <li>
                                 <a href="{{ route('mfw-accounts.pdf', $d->hash) }}" target="_blank"
                                     class="label label-default flag" title="PDF" data-bs-toggle="tooltip">
-                                    <img src="{{ asset('Modules/css/flags/' . $d->pdf_locale . '.png') }}"
-                                        alt="" />
+                                    <img src="{{ asset('vendor/mfw/flags/' . $d->pdf_locale . '.svg') }}" alt="" />
                                 </a>
                             </li>
                             <li>

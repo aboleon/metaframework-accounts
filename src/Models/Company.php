@@ -112,3 +112,5 @@ class Company extends Model implements TranslatableInterface
         return $this;
     }
 }
+
+

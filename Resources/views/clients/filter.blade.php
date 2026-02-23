@@ -111,3 +111,5 @@
         <script src="{!! asset('vendor/mfw-accounts/js/clients/finder.js') !!}"></script>
         <script src="{!! asset('vendor/mfw-accounts/js/filters.js') !!}"></script>
 @endpush
+
+
