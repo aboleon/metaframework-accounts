@@ -8,31 +8,40 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 use Maatwebsite\Excel\Facades\Excel;
-use MetaFramework\Mailer\Http\Controllers\MailController;
-use MetaFramework\Polyglote\Traits\CyrillicContentTrait;
-use MetaFramework\Support\Traits\Responses;
-use MetaFramework\Traits\NumericInputNormalizer;
 use MetaFramework\Accounts\Accessors\InvoiceExpenseAccessor;
 use MetaFramework\Accounts\Exports\InvoicesIndexExport;
 use MetaFramework\Accounts\Http\Controllers\InvoiceController;
+use MetaFramework\Accounts\Http\Requests\ExportInvoicesRequest;
+use MetaFramework\Accounts\Http\Requests\StoreInvoiceRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateInvoiceExpensesRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateInvoiceRequest;
 use MetaFramework\Accounts\Mailer\Invoice as InvoiceMailer;
 use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Accounts\Validators\AccountMailValidator;
+use MetaFramework\Mailer\Http\Controllers\MailController;
+use MetaFramework\Polyglote\Traits\CyrillicContentTrait;
+use MetaFramework\Services\Validation\ValidationInstance;
+use MetaFramework\Support\Traits\Responses;
 use Throwable;
 
 class InvoiceActions
 {
     use CyrillicContentTrait;
-    use NumericInputNormalizer;
     use Responses;
 
     public function add(Request $request): array
     {
         $this->enableAjaxMode();
 
-        $invoice = new InvoiceController()->createFromRequest($request);
+        $validation = new ValidationInstance;
+        $validation->validation(StoreInvoiceRequest::class);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
+
+        $invoice = new InvoiceController()->createFromData($validated);
 
         $this->responseSuccess(__('mfw-accounts::ui.document_is_saved'));
         $this->response['callback']    = 'invoice.update';
@@ -48,9 +57,12 @@ class InvoiceActions
 
         $controller = new InvoiceController;
         if (request('paid') === 'date_paid' && !request()->filled('date_paid')) {
-            request()->merge(['date_paid' => now()]);
+            request()->merge(['date_paid' => now()->format('d/m/Y')]);
         }
-        $validated = $controller->validateInvoice();
+        $validation = new ValidationInstance;
+        $validation->validation(UpdateInvoiceRequest::class);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
         $invoiceId = (int) (request('object_id') ?? request('id'));
         $invoice   = Invoice::findOrFail($invoiceId);
 
@@ -201,7 +213,22 @@ class InvoiceActions
     {
         $this->enableAjaxMode();
 
-        $invoiceId = (int) request('invoice_id');
+        try {
+            $validation = new ValidationInstance;
+            $validation->validation(UpdateInvoiceExpensesRequest::class);
+            $validated = $validation->validatedData();
+            $validated = is_array($validated) ? $validated : [];
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->responseError((string) $message);
+                }
+            }
+
+            return $this->fetchResponse();
+        }
+
+        $invoiceId = (int) ($validated['invoice_id'] ?? 0);
         $invoice   = Invoice::findOrFail($invoiceId);
 
         if (!$invoice->paid || $invoice->duplicata || $invoice->isAssociatedToExpense()) {
@@ -209,12 +236,14 @@ class InvoiceActions
 
             return $this->fetchResponse();
         }
-        $expenses = $this->normalizeNumericValue(request('expenses'));
-        $noExpenses = request()->boolean('no_expenses') && (float) $expenses <= 0;
+        $expenses = $validated['expenses'] ?? null;
+        $noExpenses = !empty($validated['no_expenses']) && (float) ($expenses ?? 0) <= 0;
 
-        $protocolRef           = trim((string) request('expense_protocol_ref'));
+        $protocolRef           = trim((string) ($validated['expense_protocol_ref'] ?? ''));
         $protocolRef           = $protocolRef !== '' ? $protocolRef : null;
-        $expenseAssociations   = request('expense_associations', []);
+        $expenseAssociations   = isset($validated['expense_associations']) && is_array($validated['expense_associations'])
+            ? $validated['expense_associations']
+            : [];
         $previousAssociatedIds = $invoice
             ->expenseAssociatedInvoices()
             ->pluck($invoice->getTable() . '.id')
@@ -297,8 +326,13 @@ class InvoiceActions
 
     public function export(): JsonResponse
     {
-        $filters = request()->all();
-        $format = (string) (request('format') ?? 'json');
+        $validation = new ValidationInstance;
+        $validation->validation(ExportInvoicesRequest::class);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
+
+        $filters = $validated;
+        $format = (string) ($validated['format'] ?? 'json');
         $sortBy = (string) ($filters['sort_by'] ?? '');
         $sortDir = strtolower((string) ($filters['sort_dir'] ?? 'desc'));
         $sortDir = in_array($sortDir, ['asc', 'desc'], true) ? $sortDir : 'desc';

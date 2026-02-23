@@ -6,13 +6,17 @@ namespace MetaFramework\Accounts\Actions;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use MetaFramework\Accessors\Locale;
+use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateAddressTranslationsRequest;
+use MetaFramework\Accounts\Models\Account;
+use MetaFramework\Accounts\Models\AccountAddress;
 use MetaFramework\Polyglote\Traits\CyrillicContentTrait;
 use MetaFramework\Polyglote\Traits\TransliterationTrait;
 use MetaFramework\Services\GooglePlacesTranslator;
+use MetaFramework\Services\Validation\ValidationInstance;
 use MetaFramework\Support\Traits\Ajax;
-use MetaFramework\Accounts\Models\Account;
-use MetaFramework\Accounts\Models\AccountAddress;
 
 class AccountActions
 {
@@ -24,7 +28,7 @@ class AccountActions
 
     public function findAccountByKeywords(Request $request): array
     {
-        $term = trim((string)$request->input('data'));
+        $term = trim((string) $request->input('data'));
 
         if ($term === '' || strlen($term) < 2) {
             $this->responseElement('accounts', []);
@@ -86,7 +90,7 @@ class AccountActions
 
     public function updateClientData(): self
     {
-        $accountId = (int)request('object_id');
+        $accountId = (int) request('object_id');
 
         if ($accountId) {
             $account = Account::find($accountId);
@@ -101,23 +105,23 @@ class AccountActions
             $isNew   = true;
         }
 
-        $rules = $this->clientRules();
-        $this->applyTranslatableRule($rules, request('first_name'), 'first_name');
-        $this->applyTranslatableRule($rules, request('last_name'), 'last_name');
-        $this->applyBusinessRules($rules);
-
-        $validator = validator(request()->all(), $rules);
-
-        if ($validator->fails()) {
-            foreach ($validator->errors()->all() as $message) {
-                $this->responseError($message);
+        try {
+            $validation = new ValidationInstance;
+            $validation->validation(UpdateAccountClientAjaxRequest::class);
+            $validated = $validation->validatedData();
+            $validated = is_array($validated) ? $validated : [];
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->responseError((string) $message);
+                }
             }
 
             return $this;
         }
 
-        $this->persistClient($account, $validator->validated());
-        $this->persistBusiness($account, $validator->validated(), $isNew);
+        $this->persistClient($account, $validated);
+        $this->persistBusiness($account, $validated, $isNew);
         $this->persistAddress($account, request()->input('mfw_google_places', []));
 
         $this->responseSuccess(__('mfw-accounts::ui.client.is_saved'));
@@ -135,7 +139,22 @@ class AccountActions
 
     public function updateAddressTranslations(): self
     {
-        $accountId = (int)request('object_id');
+        try {
+            $validation = new ValidationInstance;
+            $validation->validation(UpdateAddressTranslationsRequest::class);
+            $validated = $validation->validatedData();
+            $validated = is_array($validated) ? $validated : [];
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->responseError((string) $message);
+                }
+            }
+
+            return $this;
+        }
+
+        $accountId = (int) ($validated['object_id'] ?? 0);
         $account   = Account::find($accountId);
 
         if (!$account) {
@@ -151,7 +170,9 @@ class AccountActions
             return $this;
         }
 
-        $translations  = (array)request('translations', []);
+        $translations  = isset($validated['translations']) && is_array($validated['translations'])
+            ? $validated['translations']
+            : [];
         $allowedFields = $this->correctionFields();
 
         foreach ($translations as $field => $locales) {
@@ -167,22 +188,6 @@ class AccountActions
         $this->responseSuccess(__('ui.updateSuccess'));
 
         return $this;
-    }
-
-    /**
-     * @return array<string, array<int, string>>
-     */
-    private function clientRules(): array
-    {
-        return [
-            'first_name' => ['nullable'],
-            'last_name'  => ['nullable'],
-            'email'      => ['nullable', 'email', 'max:255'],
-            'phone'      => ['nullable', 'string', 'max:128'],
-            'civ'        => ['nullable', 'string', 'max:10'],
-            'locale'     => ['nullable', 'string', 'max:2'],
-            'is_company' => ['nullable', 'boolean'],
-        ];
     }
 
     /**
@@ -392,50 +397,6 @@ class AccountActions
         ];
     }
 
-    /**
-     * @param  array<string, mixed>  $rules
-     */
-    private function applyBusinessRules(array &$rules): void
-    {
-        $isCompany    = request()->boolean('is_company');
-        $businessName = request()->input('business.name');
-
-        $rules['business'] = [$isCompany ? 'required' : 'nullable', 'array'];
-        $this->applyTranslatableRule($rules, $businessName, 'business.name', $isCompany, 255);
-        $rules['business.vat_number'] = ['nullable', 'string', 'max:255'];
-        $rules['business.reg_number'] = ['nullable', 'string', 'max:255'];
-    }
-
-    /**
-     * @param  array<string, mixed>  $rules
-     */
-    private function applyTranslatableRule(
-        array &$rules,
-        mixed $value,
-        string $key,
-        bool $required = false,
-        ?int $maxLength = null,
-    ): void {
-        $baseRule = $required ? 'required' : 'nullable';
-
-        if (is_array($value)) {
-            $rules[$key] = [$baseRule, 'array'];
-            $itemRules   = ['nullable', 'string'];
-            if ($maxLength !== null) {
-                $itemRules[] = "max:$maxLength";
-            }
-            $rules[$key . '.*'] = $itemRules;
-
-            return;
-        }
-
-        $stringRules = [$baseRule, 'string'];
-        if ($maxLength !== null) {
-            $stringRules[] = "max:$maxLength";
-        }
-        $rules[$key] = $stringRules;
-    }
-
     private function normalizeNameTranslations(mixed $value): array|string|null
     {
         if ($value === null) {
@@ -450,7 +411,7 @@ class AccountActions
             return $this->normalizeTranslationArray($value);
         }
 
-        $stringValue = trim((string)$value);
+        $stringValue = trim((string) $value);
         if ($stringValue === '') {
             return null;
         }
@@ -515,7 +476,7 @@ class AccountActions
         $translations = [];
 
         foreach ($locales as $locale) {
-            $translations[$locale] = isset($values[$locale]) ? trim((string)$values[$locale]) : null;
+            $translations[$locale] = isset($values[$locale]) ? trim((string) $values[$locale]) : null;
         }
 
         $latinSource    = $translations['fr'] ?? $translations['en'] ?? null;

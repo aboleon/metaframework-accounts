@@ -8,11 +8,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use MetaFramework\Support\Traits\Responses;
-use MetaFramework\Accounts\Enum\DocTypeIncrementationEnum;
+use MetaFramework\Accounts\Http\Requests\SaveCashflowDocTypeRequest;
 use MetaFramework\Accounts\Models\CashflowDocTypes;
 use MetaFramework\Accounts\Models\Invoice;
+use MetaFramework\Services\Validation\ValidationInstance;
+use MetaFramework\Support\Traits\Responses;
 use Throwable;
 
 class CashflowDocTypeController extends Controller
@@ -36,10 +36,10 @@ class CashflowDocTypeController extends Controller
         ]);
     }
 
-    public function store(): RedirectResponse
+    public function store(SaveCashflowDocTypeRequest $request): RedirectResponse
     {
         try {
-            CashflowDocTypes::create($this->validatedData());
+            CashflowDocTypes::create($this->validatedData($request));
             $this->responseSuccess(__('mfw.record_created'));
             $this->redirectTo(route('mfw-accounts.cashflow-doctypes.index'));
         } catch (Throwable $exception) {
@@ -57,10 +57,10 @@ class CashflowDocTypeController extends Controller
         ]);
     }
 
-    public function update(CashflowDocTypes $cashflowDocType): RedirectResponse
+    public function update(SaveCashflowDocTypeRequest $request, CashflowDocTypes $cashflowDocType): RedirectResponse
     {
         try {
-            $cashflowDocType->update($this->validatedData($cashflowDocType));
+            $cashflowDocType->update($this->validatedData($request, $cashflowDocType));
             $this->responseSuccess(__('mfw.record_updated'));
             $this->redirectTo(route('mfw-accounts.cashflow-doctypes.index'));
         } catch (Throwable $exception) {
@@ -90,16 +90,12 @@ class CashflowDocTypeController extends Controller
         return $this->sendResponse();
     }
 
-    private function validatedData(?CashflowDocTypes $cashflowDocType = null): array
+    private function validatedData(SaveCashflowDocTypeRequest $request, ?CashflowDocTypes $cashflowDocType = null): array
     {
-        $data = request()->validate([
-            'admin_name'   => 'nullable|array',
-            'admin_name.*' => 'nullable|string',
-            'name'         => 'required|array',
-            'name.*'       => 'nullable|string',
-            'default'      => 'nullable|boolean',
-            'numerotation' => [Rule::enum(DocTypeIncrementationEnum::class)]
-        ]);
+        $validation = new ValidationInstance;
+        $validation->validation($request);
+        $data = $validation->validatedData();
+        $data = is_array($data) ? $data : [];
 
         $slugBase = $this->resolveSlugBase($data);
         $data['slug'] = $this->resolveUniqueSlug($slugBase, $cashflowDocType?->id);

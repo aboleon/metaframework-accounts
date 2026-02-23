@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MetaFramework\Accounts\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
+use MetaFramework\Accounts\Http\Requests\StoreVatRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateVatRequest;
+use MetaFramework\Accounts\Models\Vat;
 use MetaFramework\Controllers\Controller;
 use MetaFramework\Services\Validation\ValidationTrait;
 use MetaFramework\Support\Traits\Responses;
-use MetaFramework\Accounts\Models\Vat;
 use Throwable;
 
 class VatController extends Controller
@@ -33,17 +37,9 @@ class VatController extends Controller
         return view('mfw-accounts::vat.edit')->with($data);
     }
 
-    public function store(): RedirectResponse
+    public function store(StoreVatRequest $request): RedirectResponse
     {
-        $this->validation_rules = [
-            'vat.rate' => 'numeric|unique:mfw_accounts_vat,rate',
-            'vat.default' => 'nullable',
-        ];
-        $this->validation_messages = [
-            'vat.rate.numeric' => __('validation.integer', ['attribute' => __('mfw-sellable.vat.label')]),
-            'vat.rate.unique' => __('validation.unique', ['attribute' => __('mfw-sellable.vat.label')]),
-        ];
-        $this->validation();
+        $this->validation($request);
 
         try {
             $vat = Vat::create(
@@ -73,17 +69,9 @@ class VatController extends Controller
         return view('mfw-accounts::vat.edit')->with($data);
     }
 
-    public function update(Vat $vat): RedirectResponse
+    public function update(UpdateVatRequest $request, Vat $vat): RedirectResponse
     {
-        $this->validation_rules = [
-            'vat.rate' => 'numeric|unique:mfw_accounts_vat,rate,'.$vat->id,
-            'vat.default' => 'nullable',
-        ];
-        $this->validation_messages = [
-            'vat.rate.numeric' => __('validation.integer', ['attribute' => __('mfw-sellable.vat.label')]),
-            'vat.rate.unique' => __('validation.unique', ['attribute' => __('mfw-sellable.vat.label')]),
-        ];
-        $this->validation();
+        $this->validation($request);
 
         try {
             $vat->update(

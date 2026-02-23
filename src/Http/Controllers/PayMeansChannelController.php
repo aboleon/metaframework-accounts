@@ -7,10 +7,14 @@ namespace MetaFramework\Accounts\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use MetaFramework\Accounts\Http\Requests\StorePayMeansChannelRequest;
+use MetaFramework\Accounts\Http\Requests\UpdatePayMeansChannelRequest;
 use MetaFramework\Accounts\Models\BankAccounts;
 use MetaFramework\Accounts\Models\PayMeans;
 use MetaFramework\Accounts\Models\PayMeansChannels;
 use MetaFramework\Accounts\Models\PayMeansChannelsData;
+use MetaFramework\Services\Validation\ValidationInstance;
 use MetaFramework\Support\Traits\Responses;
 use Project;
 use Throwable;
@@ -38,15 +42,16 @@ class PayMeansChannelController extends Controller
         ]);
     }
 
-    public function store(): RedirectResponse
+    public function store(StorePayMeansChannelRequest $request): RedirectResponse
     {
-        request()->validate([
-            'category' => 'required|integer|exists:mfw_accounts_pay_means,id',
-        ]);
+        $validation = new ValidationInstance;
+        $validation->validation($request);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
 
         try {
             $channel = PayMeansChannels::query()->create([
-                'pay_mean_id' => (int) request('category'),
+                'pay_mean_id' => (int) ($validated['category'] ?? 0),
             ]);
 
             foreach (Project::locales() as $locale) {
@@ -65,31 +70,31 @@ class PayMeansChannelController extends Controller
         return $this->sendResponse();
     }
 
-    public function edit(PayMeansChannels $payMeansChannel): View|RedirectResponse
+    public function edit(Request $request, PayMeansChannels $payMeansChannel): View|RedirectResponse
     {
-        if (request()->isMethod('post')) {
+        if ($request->isMethod('post')) {
             return $this->update($payMeansChannel);
         }
 
         return view('mfw-accounts::PayMeansChannels.edit')->with([
             'data' => $payMeansChannel->load(['master', 'translations']),
-            'BankAccounts' => (new BankAccounts())->fetchAccounts(),
+            'BankAccounts' => (new BankAccounts)->fetchAccounts(),
         ]);
     }
 
     public function update(PayMeansChannels $payMeansChannel): RedirectResponse
     {
-        request()->validate([
-            'bank_account_id' => 'nullable|integer|exists:mfw_accounts_bank_accounts,id',
-            'data' => 'nullable|array',
-            'data.*' => 'nullable|array',
-            'data.*.name' => 'nullable|string',
-            'data.*.description' => 'nullable|string',
-        ]);
+        $validation = new ValidationInstance;
+        $validation->validation(UpdatePayMeansChannelRequest::class);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
+        $translationsByLocale = isset($validated['data']) && is_array($validated['data'])
+            ? $validated['data']
+            : [];
 
         try {
             $payMeansChannel->update([
-                'bank_account_id' => request('bank_account_id'),
+                'bank_account_id' => $validated['bank_account_id'] ?? null,
             ]);
 
             foreach (Project::locales() as $locale) {
@@ -98,7 +103,9 @@ class PayMeansChannelController extends Controller
                         'pay_channel_id' => $payMeansChannel->id,
                         'lg' => $locale,
                     ],
-                    (array) request('data.' . $locale, []),
+                    isset($translationsByLocale[$locale]) && is_array($translationsByLocale[$locale])
+                        ? $translationsByLocale[$locale]
+                        : [],
                 );
             }
 

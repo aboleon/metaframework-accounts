@@ -13,10 +13,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use MetaFramework\Accessors\Locale;
-use MetaFramework\Services\GooglePlacesTranslator;
+use MetaFramework\Accounts\Http\Requests\SaveAccountClientRequest;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
 use MetaFramework\Accounts\Models\Invoice;
+use MetaFramework\Services\GooglePlacesTranslator;
+use MetaFramework\Services\Validation\ValidationInstance;
 
 class AccountController extends Controller
 {
@@ -51,7 +53,7 @@ class AccountController extends Controller
             ->filters($filters);
 
         $sortBy = $filters['sort_by'] ?? 'date_created';
-        $sortOrder = strtolower((string)($filters['sort_order'] ?? 'desc'));
+        $sortOrder = strtolower((string) ($filters['sort_order'] ?? 'desc'));
         $sortOrder = in_array($sortOrder, ['asc', 'desc'], true) ? $sortOrder : 'desc';
 
         match ($sortBy) {
@@ -75,10 +77,10 @@ class AccountController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SaveAccountClientRequest $request): RedirectResponse
     {
         $client = new Account;
-        $this->persistClient($client, $this->validateClient($request));
+        $this->persistClient($client, $this->validatedClientData($request));
         $this->persistAddress($client, $request);
 
         return redirect()
@@ -96,9 +98,9 @@ class AccountController extends Controller
         ]);
     }
 
-    public function update(Request $request, Account $client): RedirectResponse
+    public function update(SaveAccountClientRequest $request, Account $client): RedirectResponse
     {
-        $this->persistClient($client, $this->validateClient($request));
+        $this->persistClient($client, $this->validatedClientData($request));
         $this->persistAddress($client, $request);
 
         return redirect()
@@ -137,7 +139,7 @@ class AccountController extends Controller
 
     public function search(Request $request): JsonResponse
     {
-        $name = (string)$request->get('client_name', '');
+        $name = (string) $request->get('client_name', '');
 
         $clients = Account::query()
             ->when($name !== '', function ($query) use ($name) {
@@ -181,16 +183,13 @@ class AccountController extends Controller
             ->with('session_message', $message);
     }
 
-    protected function validateClient(Request $request): array
+    protected function validatedClientData(SaveAccountClientRequest $request): array
     {
-        return $request->validate([
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:128',
-            'civ' => 'nullable|string|max:10',
-            'locale' => 'nullable|string|max:2',
-        ]);
+        $validation = new ValidationInstance;
+        $validation->validation($request);
+        $validated = $validation->validatedData();
+
+        return is_array($validated) ? $validated : [];
     }
 
     protected function persistClient(Account $client, array $data): void

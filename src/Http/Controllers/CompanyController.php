@@ -7,8 +7,10 @@ namespace MetaFramework\Accounts\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use MetaFramework\Accounts\Models\CompanyData;
+use MetaFramework\Accounts\Http\Requests\UpdateCompanyRequest;
 use MetaFramework\Accounts\Models\Company;
+use MetaFramework\Accounts\Models\CompanyData;
+use MetaFramework\Services\Validation\ValidationInstance;
 use MetaFramework\Support\Traits\Responses;
 use Throwable;
 
@@ -30,30 +32,23 @@ class CompanyController extends Controller
         return view('mfw-accounts::company.edit')->with('data', $company);
     }
 
-    public function update(): RedirectResponse
+    public function update(UpdateCompanyRequest $request): RedirectResponse
     {
-        $validated = request()->validate([
-            'id' => 'nullable|integer|min:1',
-            'EIN' => 'nullable|string',
-            'VAT' => 'nullable|string',
-            'bilan_start' => 'nullable|string|max:5',
-            'bilan_end' => 'nullable|string|max:5',
-            'website' => 'nullable|string',
-            'email' => 'nullable|string',
-            'phone' => 'nullable|string',
-            'locales' => 'nullable|array',
-        ]);
+        $validation = new ValidationInstance;
+        $validation->validation($request);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
 
         $companyId = (int) ($validated['id'] ?? 1);
         $company = Company::query()->find($companyId) ?? new Company(['id' => $companyId]);
 
         foreach (Company::scalarSettingsFields() as $field) {
-            $company->{$field} = (string) request($field, '');
+            $company->{$field} = (string) ($validated[$field] ?? '');
         }
 
         try {
             $company->save();
-            $this->syncLocalizedCompanyData($company, (array) request('locales', []));
+            $this->syncLocalizedCompanyData($company, (array) ($validated['locales'] ?? []));
 
             $this->responseSuccess(__('ui.info_is_saved'));
             $this->redirectTo(route('mfw-accounts.company.edit'));

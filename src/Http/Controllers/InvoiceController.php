@@ -7,23 +7,22 @@ namespace MetaFramework\Accounts\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Auth;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use MetaFramework\Traits\NumericInputNormalizer;
 use MetaFramework\Accounts\Accessors\InvoiceAccessor;
 use MetaFramework\Accounts\Accessors\InvoiceExpenseAccessor;
+use MetaFramework\Accounts\Http\Requests\StoreInvoiceRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateInvoiceRequest;
 use MetaFramework\Accounts\Models\BankAccounts;
 use MetaFramework\Accounts\Models\CashflowDocTypes;
 use MetaFramework\Accounts\Models\Currency;
 use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Accounts\Models\InvoiceStructure;
+use MetaFramework\Services\Validation\ValidationInstance;
 
 class InvoiceController extends Controller
 {
-    use NumericInputNormalizer;
-
     public function index(): View
     {
         $filters = request()->all();
@@ -173,7 +172,7 @@ class InvoiceController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreInvoiceRequest $request): RedirectResponse
     {
         $invoice = $this->createFromRequest($request);
 
@@ -182,9 +181,12 @@ class InvoiceController extends Controller
             ->with('session_message', __('mfw-accounts::ui.document_is_saved'));
     }
 
-    public function update(Request $request, Invoice $invoice): RedirectResponse
+    public function update(UpdateInvoiceRequest $request, Invoice $invoice): RedirectResponse
     {
-        $validated = $this->validateInvoice($request);
+        $validation = new ValidationInstance;
+        $validation->validation($request);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
 
         DB::transaction(function () use ($invoice, $validated) {
             $this->persistInvoice($invoice, $validated);
@@ -204,45 +206,6 @@ class InvoiceController extends Controller
         $duplicata->push();
 
         return redirect()->route('mfw-accounts.invoices.edit', $duplicata);
-    }
-
-    public function validateInvoice(): array
-    {
-        $this->normalizeNumericInputKey('amount');
-        $this->normalizeNumericInputKey('vat');
-        $this->normalizeNumericInputKey('quantity');
-
-        return request()->validate([
-            'account_id' => 'required|integer|exists:users,id',
-            'doc_type' => 'required|integer|exists:mfw_accounts_cashflow_doc_types,id',
-            'document_id' => 'nullable|integer',
-            'invoice_date' => 'required|string',
-            'currency' => 'required|integer',
-            'sell_channel' => 'nullable',
-            'title' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'pdf_locale' => 'nullable|string',
-            'bank_account' => 'nullable|integer',
-            'attached_to' => 'nullable|integer',
-            'sale_id' => 'nullable|integer',
-            'date_paid' => 'nullable|string',
-            'date_before' => 'nullable|string|required_if:paid,date_before',
-            'pay_mean' => 'nullable|integer',
-            'paid' => 'nullable',
-            'amount' => 'array',
-            'amount.*' => 'numeric',
-            'vat' => 'array',
-            'vat.*' => 'numeric',
-            'vat_id' => 'array',
-            'vat_id.*' => 'integer|nullable',
-            'quantity' => 'array',
-            'quantity.*' => 'numeric|nullable',
-            'content' => 'array',
-            'content.*' => 'nullable|string',
-            'expenses' => 'nullable|numeric',
-            'expense_associations' => 'nullable|array',
-            'expense_associations.*' => 'integer|exists:mfw_accounts_invoices,id',
-        ]);
     }
 
     public function persistInvoice(Invoice $invoice, array $data): Invoice
@@ -349,12 +312,18 @@ class InvoiceController extends Controller
         return $invoice;
     }
 
-    public function createFromRequest(Request $request): Invoice
+    public function createFromRequest(StoreInvoiceRequest $request): Invoice
     {
-        $validated = $request->validate([
-            'account_id' => 'required|integer|exists:users,id',
-            'doc_type' => 'required|integer|exists:mfw_accounts_cashflow_doc_types,id',
-        ]);
+        $validation = new ValidationInstance;
+        $validation->validation($request);
+        $validated = $validation->validatedData();
+        $validated = is_array($validated) ? $validated : [];
+
+        return $this->createFromData($validated);
+    }
+
+    public function createFromData(array $validated): Invoice
+    {
 
         $docType = (int) ($validated['doc_type'] ?? Invoice::DEFAULT_DOC_TYPE);
         $currency = Invoice::defaultCurrencyId();
@@ -366,16 +335,10 @@ class InvoiceController extends Controller
         $invoice->document_id = Invoice::nextDocumentId($docType);
         $invoice->hash = Str::random(40);
         $invoice->user = Auth::id();
-        $invoice->pdf_locale = $request->input('pdf_locale', config('app.locale'));
+        $invoice->pdf_locale = $validated['pdf_locale'] ?? config('app.locale');
         $invoice->invoice_date = now()->format('d/m/Y');
         $invoice->save();
 
         return $invoice;
-    }
-
-    private function normalizeNumericInputKey(string $key): void
-    {
-        $value = request()->input($key);
-        request()->merge([$key => $this->normalizeNumericArrayValue($value)]);
     }
 }

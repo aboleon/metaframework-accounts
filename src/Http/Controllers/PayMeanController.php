@@ -7,9 +7,11 @@ namespace MetaFramework\Accounts\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\RedirectResponse;
-use MetaFramework\Support\Traits\Responses;
+use MetaFramework\Accounts\Http\Requests\SavePayMeanRequest;
 use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Accounts\Models\PayMeans;
+use MetaFramework\Services\Validation\ValidationInstance;
+use MetaFramework\Support\Traits\Responses;
 use Throwable;
 
 class PayMeanController extends Controller
@@ -24,15 +26,15 @@ class PayMeanController extends Controller
     public function create(): Renderable
     {
         return view('mfw-accounts::paymeans.edit')->with([
-            'data'  => new PayMeans(),
+            'data'  => new PayMeans,
             'route' => route('mfw-accounts.pay-means.store'),
         ]);
     }
 
-    public function store(): RedirectResponse
+    public function store(SavePayMeanRequest $request): RedirectResponse
     {
         try {
-            PayMeans::create($this->validatedData());
+            PayMeans::create($this->validatedData($request));
             $this->responseSuccess(__('mfw.record_created'));
             $this->redirectTo(route('mfw-accounts.pay-means.index'));
         } catch (Throwable $exception) {
@@ -50,10 +52,10 @@ class PayMeanController extends Controller
         ]);
     }
 
-    public function update(PayMeans $payMean): RedirectResponse
+    public function update(SavePayMeanRequest $request, PayMeans $payMean): RedirectResponse
     {
         try {
-            $payMean->update($this->validatedData());
+            $payMean->update($this->validatedData($request));
             $this->responseSuccess(__('mfw.record_updated'));
             $this->redirectTo(route('mfw-accounts.pay-means.index'));
         } catch (Throwable $exception) {
@@ -83,12 +85,12 @@ class PayMeanController extends Controller
         return $this->sendResponse();
     }
 
-    private function validatedData(): array
+    private function validatedData(SavePayMeanRequest $request): array
     {
-        return request()->validate([
-            'name'   => 'required|array',
-            'name.*' => 'nullable|string',
-            'type'   => 'nullable|string',
-        ]);
+        $validation = new ValidationInstance;
+        $validation->validation($request);
+        $validated = $validation->validatedData();
+
+        return is_array($validated) ? $validated : [];
     }
 }
