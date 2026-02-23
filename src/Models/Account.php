@@ -8,11 +8,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use MetaFramework\Polyglote\Interfaces\TranslatableInterface;
 use MetaFramework\Accounts\Support\DateFormat;
+use MetaFramework\Polyglote\Interfaces\TranslatableInterface;
+use MetaFramework\Polyglote\Traits\Translation;
 
-final class Account extends AccountUser implements TranslatableInterface
+class Account extends AccountUser implements TranslatableInterface
 {
+    use Translation;
+
     protected $table = 'users';
 
     protected static function boot()
@@ -112,9 +115,9 @@ final class Account extends AccountUser implements TranslatableInterface
 
     public function scopeFilters(Builder $query, array $filters = []): Builder
     {
-        $query->clientType(isset($filters['client_type']) ? (int)$filters['client_type'] : null);
+        $query->clientType(isset($filters['client_type']) ? (int) $filters['client_type'] : null);
         $query->dateRange($filters['date_operator'] ?? null, $filters['date'] ?? null, $filters['date2'] ?? null);
-        $query->clientId(isset($filters['account_id']) ? (int)$filters['account_id'] : null);
+        $query->clientId(isset($filters['account_id']) ? (int) $filters['account_id'] : null);
 
         return $query;
     }
@@ -127,5 +130,19 @@ final class Account extends AccountUser implements TranslatableInterface
     public function business(): HasOne
     {
         return $this->hasOne(AccountBusiness::class, 'user_id');
+    }
+
+    public function setTranslatables(): array
+    {
+        return [
+            'first_name' => [
+                'label' => __('mfw-accounts::ui.FirstName'),
+                'class' => 'col-md-6',
+            ],
+            'last_name' => [
+                'label' => __('mfw-accounts::ui.LastName'),
+                'class' => 'col-md-6',
+            ],
+        ];
     }
 }
