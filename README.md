@@ -81,6 +81,39 @@ Published to:
 
 - `lang/modules/mfw-accounts`
 
+### Front Account Skeleton (optional)
+
+This package owns the front account login/dashboard skeleton publishables (controllers, middleware, request, routes, and starter views).
+
+Publish files only:
+
+```bash
+php artisan vendor:publish --provider="MetaFramework\\Accounts\\Providers\\AccountsServiceProvider" --tag="mfw-accounts-front"
+```
+
+Or publish + wire routes/auth guard automatically:
+
+```bash
+php artisan mfw-accounts:front
+```
+
+The installer command:
+
+- publishes the front account skeleton files into the app root
+- adds `require __DIR__ . '/account.php';` to `routes/web.php` (if missing)
+- ensures `config/auth.php` contains `account` guard/provider/password broker entries
+
+Published files include:
+
+- `app/Http/Controllers/Front/Account/AccountAuthController.php`
+- `app/Http/Controllers/Front/Account/AccountPortalController.php`
+- `app/Http/Requests/Front/Account/AccountLoginRequest.php`
+- `app/Http/Middleware/Front/AccountLocale.php`
+- `app/Http/Middleware/Front/AccountLoginLocale.php`
+- `routes/account.php`
+- `resources/views/front/account/login.blade.php`
+- `resources/views/front/account/dashboard.blade.php`
+
 ## Routes
 
 The package loads web routes from:
@@ -124,4 +157,4 @@ If your host application currently uses legacy `thesaurus_*` tables, handle the 
 - This package keeps its own table naming (`mfw_accounts_*`).
 - Asset URLs are expected under `public/vendor/mfw-accounts`.
 - Route prefix is configurable; route names are stable (`mfw-accounts.*`).
-
+- Front account skeleton publish tag is `mfw-accounts-front` (legacy alias `mfw-account` is kept for BC).

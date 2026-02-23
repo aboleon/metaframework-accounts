@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use MetaFramework\Accounts\Console\InstallFrontAccount;
 use MetaFramework\Accounts\Models\Currency;
 use Throwable;
 
@@ -31,6 +32,10 @@ class AccountsServiceProvider extends ServiceProvider
         $this->shareCurrencies();
 
         if ($this->app->runningInConsole()) {
+            $this->commands([
+                InstallFrontAccount::class,
+            ]);
+
             $this->publishes([
                 __DIR__ . '/../../Config/mfw-accounts.php' => config_path('mfw-accounts.php'),
             ], 'mfw-accounts-config');
@@ -46,6 +51,15 @@ class AccountsServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../../Resources/public' => public_path('vendor/mfw-accounts'),
             ], 'mfw-accounts-assets');
+
+            $this->publishes([
+                __DIR__ . '/../../publishables/account/' => base_path(),
+            ], 'mfw-accounts-front');
+
+            // BC alias for the previous MetaFramework tag name.
+            $this->publishes([
+                __DIR__ . '/../../publishables/account/' => base_path(),
+            ], 'mfw-account');
         }
     }
 
