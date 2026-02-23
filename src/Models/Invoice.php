@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use MetaFramework\Casts\Datepicker;
 use MetaFramework\Casts\NullablePriceInteger;
@@ -164,11 +163,6 @@ class Invoice extends Model
         }
 
         return "sum(case when currency = {$sourceId} then {$columnExpression} / {$rate} else {$columnExpression} end)";
-    }
-
-    public static function getClientInvoices(int $client): array
-    {
-        return self::where('account_id', $client)->orderByDesc('id')->get()->toArray();
     }
 
     public static function nextDocumentId(int $docType): int
@@ -393,18 +387,6 @@ class Invoice extends Model
     public function vat(): BelongsTo
     {
         return $this->belongsTo(Vat::class, 'vat_id');
-    }
-
-    public function invoiceLocaleOptions(): Collection
-    {
-        $locales = config('app.languages', []);
-
-        return collect(is_array($locales) ? $locales : explode(',', (string) $locales))->filter();
-    }
-
-    public static function findWithDetails(int $id): ?self
-    {
-        return self::whereId($id)->with(['details', 'client', 'facturation'])->first();
     }
 
     public function expenseAssociatedInvoices(): BelongsToMany

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MetaFramework\Accounts\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 
 class SellChannels extends Model
 {
@@ -13,8 +12,4 @@ class SellChannels extends Model
 
     public $timestamps = false;
 
-    public static function SellChannels(): Collection
-    {
-        return self::query()->pluck('name', 'id');
-    }
 }

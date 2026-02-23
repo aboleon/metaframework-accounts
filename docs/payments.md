@@ -20,7 +20,6 @@ The payment system covers payment methods, bank accounts, and the cashflow ledge
 ### Static Methods
 
 - `fetchPayMeansByLocale(?string $locale)` — Returns payment methods with translations for the given locale.
-- `select_form($value, string $form_name)` — Returns an HTML `<select>` element for use in forms.
 
 ### CRUD Routes
 

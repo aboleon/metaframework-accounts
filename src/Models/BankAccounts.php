@@ -31,8 +31,4 @@ class BankAccounts extends Model
         return $this->hasOne(BankAccountsData::class, 'account_id')->where('lg', $this->locale());
     }
 
-    public function translations()
-    {
-        return $this->hasMany(BankAccountsData::class, 'account_id');
-    }
 }

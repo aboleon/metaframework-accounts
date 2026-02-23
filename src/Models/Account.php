@@ -20,32 +20,6 @@ final class Account extends AccountUser implements TranslatableInterface
         parent::boot();
     }
 
-    public static function Form($value = null): string
-    {
-        $data = self::select('id', 'first_name', 'last_name')
-            ->with('business')
-            ->orderBy('last_name')
-            ->get();
-
-        $html = "<select class='form-control' name='clients'>";
-        $html .= "<option value='0'>" . __('ui.optionChoose') . '</option>';
-        foreach ($data as $virgo) {
-            $businessName = $virgo->business?->name;
-            $html .= "<option value='" . $virgo->id . "'";
-            if (!empty($value) && $value == $virgo->id) {
-                $html .= ' selected';
-            }
-            $html .= '>' . $virgo->last_name . ' ' . $virgo->first_name;
-            if ($businessName) {
-                $html .= ' ' . strtoupper($businessName);
-            }
-            $html .= '</option>';
-        }
-        $html .= '</select>';
-
-        return $html;
-    }
-
     public function currencyType(): BelongsTo
     {
         return $this->belongsTo(Currency::class, 'currency');
@@ -64,11 +38,6 @@ final class Account extends AccountUser implements TranslatableInterface
     public function identity(): string
     {
         return $this->isCompany() ? $this->business->name : $this->names();
-    }
-
-    public function getClient(int $client): ?self
-    {
-        return Account::whereId($client)->with(['address', 'business'])->first();
     }
 
     public function invoices(): HasMany

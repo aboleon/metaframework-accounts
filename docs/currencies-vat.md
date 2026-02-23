@@ -19,7 +19,6 @@
 
 ```php
 Currency::getCurrencies(): Collection    // All currencies
-Currency::getCurrenciesSigns(): Collection  // id → sign map
 ```
 
 Currencies are cached by the service provider at boot time and shared with all views.

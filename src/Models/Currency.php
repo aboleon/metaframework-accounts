@@ -13,11 +13,6 @@ class Currency extends Model
 
     public $timestamps = false;
 
-    public static function getCurrenciesSigns(): Collection
-    {
-        return self::query()->orderByDesc('default')->pluck('sign', 'id');
-    }
-
     public static function getCurrencies(): Collection
     {
         return self::query()->orderByDesc('code')->get();

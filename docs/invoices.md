@@ -49,8 +49,6 @@ The invoice system manages financial documents (invoices, quotes, etc.) linked t
 | Constant | Value | Description |
 |----------|-------|-------------|
 | `DEFAULT_DOC_TYPE` | `5` | Default document type ID |
-| `DEFAULT_CURRENCY` | `1` | Default currency ID |
-| `EUR_CURRENCY_ID` | `1` | Reference currency ID |
 
 ### Relations
 
@@ -89,9 +87,7 @@ The invoice system manages financial documents (invoices, quotes, etc.) linked t
 
 | Method | Description |
 |--------|-------------|
-| `getClientInvoices(int $client): array` | Returns all invoices for a client |
 | `nextDocumentId(int $docType): int` | Returns the next document number for a doc type |
-| `findWithDetails(int $id): ?self` | Eager-loads an invoice with its line items |
 
 ## Model: InvoiceStructure (Line Items)
 

@@ -49,21 +49,6 @@ final class PayMeans extends Model implements TranslatableInterface
             ->keyBy('pay_mean_id');
     }
 
-    public static function select_form($value = null, string $form_name = 'pay_mean'): string
-    {
-        $locale = app()->getLocale();
-        $docs = self::all();
-        $html = "<select class='form-control' name='".$form_name."'>";
-        foreach ($docs as $doc) {
-            $label = $doc->translation('name', $locale);
-            $selected = $value && $value == $doc->id ? ' selected' : null;
-            $html .= "<option value='".$doc->id."'".$selected.">".$label."</option>";
-        }
-        $html .= "</select>";
-
-        return $html;
-    }
-
     public function channels(): HasMany
     {
         return $this->hasMany(PayMeansChannels::class, 'pay_mean_id');
