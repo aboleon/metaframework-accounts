@@ -9,7 +9,43 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        if (Schema::hasTable('mfw_accounts_cashflow_doc_types')) {
+        $legacyTables = [
+            'thesaurus_cashflow_doc_types',
+            'thesaurus_currencies',
+            'thesaurus_vat',
+            'thesaurus_sell_channels',
+            'thesaurus_pay_means',
+            'thesaurus_company',
+            'thesaurus_providers',
+            'thesaurus_bank_accounts',
+        ];
+
+        foreach ($legacyTables as $legacyTable) {
+            if (Schema::hasTable($legacyTable)) {
+                return;
+            }
+        }
+
+        $targetTables = [
+            'mfw_accounts_cashflow_doc_types',
+            'mfw_accounts_currencies',
+            'mfw_accounts_vat',
+            'mfw_accounts_sell_channels',
+            'mfw_accounts_pay_means',
+            'mfw_accounts_company',
+            'mfw_accounts_providers',
+            'mfw_accounts_bank_accounts',
+        ];
+
+        $allTargetsExist = true;
+        foreach ($targetTables as $targetTable) {
+            if (!Schema::hasTable($targetTable)) {
+                $allTargetsExist = false;
+                break;
+            }
+        }
+
+        if ($allTargetsExist) {
             return;
         }
 

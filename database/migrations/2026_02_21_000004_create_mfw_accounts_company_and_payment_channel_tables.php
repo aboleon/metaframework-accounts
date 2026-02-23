@@ -10,6 +10,37 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $legacyTables = [
+            'thesaurus_company_data',
+            'thesaurus_bank_accounts_data',
+            'thesaurus_pay_means_channels',
+            'thesaurus_pay_means_channels_data',
+        ];
+
+        foreach ($legacyTables as $legacyTable) {
+            if (Schema::hasTable($legacyTable)) {
+                return;
+            }
+        }
+
+        $targetTables = [
+            'mfw_accounts_company_data',
+            'mfw_accounts_bank_accounts_data',
+            'mfw_accounts_pay_means_channels',
+        ];
+
+        $allTargetsExist = true;
+        foreach ($targetTables as $targetTable) {
+            if (!Schema::hasTable($targetTable)) {
+                $allTargetsExist = false;
+                break;
+            }
+        }
+
+        if ($allTargetsExist) {
+            return;
+        }
+
         Schema::create('mfw_accounts_company_data', function (Blueprint $table) {
             $table->charset = 'utf8mb4';
             $table->collation = 'utf8mb4_unicode_ci';

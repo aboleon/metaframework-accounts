@@ -9,6 +9,36 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        $legacyTables = [
+            'thesaurus_accounts',
+            'thesaurus_account_address',
+            'thesaurus_account_business',
+        ];
+
+        foreach ($legacyTables as $legacyTable) {
+            if (Schema::hasTable($legacyTable)) {
+                return;
+            }
+        }
+
+        $targetTables = [
+            'mfw_accounts_accounts',
+            'mfw_accounts_account_address',
+            'mfw_accounts_account_business',
+        ];
+
+        $allTargetsExist = true;
+        foreach ($targetTables as $targetTable) {
+            if (!Schema::hasTable($targetTable)) {
+                $allTargetsExist = false;
+                break;
+            }
+        }
+
+        if ($allTargetsExist) {
+            return;
+        }
+
         Schema::create('mfw_accounts_accounts', function (Blueprint $table) {
             $table->increments('id');
             $table->tinyText('prenom')->nullable();

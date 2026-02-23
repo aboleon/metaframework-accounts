@@ -9,6 +9,36 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        $legacyTables = [
+            'thesaurus_invoices',
+            'thesaurus_invoices_structure',
+            'thesaurus_invoice_expense_associations',
+        ];
+
+        foreach ($legacyTables as $legacyTable) {
+            if (Schema::hasTable($legacyTable)) {
+                return;
+            }
+        }
+
+        $targetTables = [
+            'mfw_accounts_invoices',
+            'mfw_accounts_invoices_structure',
+            'mfw_accounts_invoice_expense_associations',
+        ];
+
+        $allTargetsExist = true;
+        foreach ($targetTables as $targetTable) {
+            if (!Schema::hasTable($targetTable)) {
+                $allTargetsExist = false;
+                break;
+            }
+        }
+
+        if ($allTargetsExist) {
+            return;
+        }
+
         Schema::create('mfw_accounts_invoices', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('document_id');
