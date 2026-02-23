@@ -44,9 +44,7 @@
         ];
     });
 
-    $rawNetGain = $invoice->getRawOriginal('net_gain');
-    $rawNetGainPercent = $invoice->getRawOriginal('net_gain_percent');
-    $noExpensesSelected = !empty($rawNetGain) || !empty($rawNetGainPercent);
+    $noExpensesSelected = (bool) ($invoice->getRawOriginal('no_expenses') ?? false);
 @endphp
 
 <div class="card h-100" id="expenses-card">

@@ -162,7 +162,7 @@ class InvoiceExpenseAccessor
 
     public function hasExpenseData(): bool
     {
-        return $this->invoice->expenses > 0 || $this->invoice->net_gain > 0;
+        return (bool) $this->invoice->no_expenses || $this->invoice->expenses > 0 || $this->invoice->net_gain > 0;
     }
 
     private function getCurrencySign(): string

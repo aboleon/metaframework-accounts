@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->unsignedInteger('quantity')->nullable()->default(1);
             $table->integer('vat')->default(0);
             $table->unsignedInteger('expenses')->nullable()->default(0);
+            $table->boolean('no_expenses')->default(false);
             $table->integer('net_gain')->nullable()->default(0)->comment('Computed from expenses/associations; do not edit manually.');
             $table->integer('net_gain_percent')->nullable()->default(0)->comment('Computed net gain percent from net_gain and total amount.');
             $table->string('expense_protocol_ref')->nullable();

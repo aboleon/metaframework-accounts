@@ -209,7 +209,8 @@ class InvoiceActions
 
             return $this->fetchResponse();
         }
-        $expenses   = $this->normalizeNumericValue(request('expenses'));
+        $expenses = $this->normalizeNumericValue(request('expenses'));
+        $noExpenses = request()->boolean('no_expenses') && (float) $expenses <= 0;
 
         $protocolRef           = trim((string) request('expense_protocol_ref'));
         $protocolRef           = $protocolRef !== '' ? $protocolRef : null;
@@ -224,6 +225,7 @@ class InvoiceActions
 
         try {
             $invoice->expenses             = $expenses;
+            $invoice->no_expenses          = $noExpenses;
             $invoice->expense_protocol_ref = $protocolRef;
             $invoice->save();
 
@@ -232,7 +234,7 @@ class InvoiceActions
             $invoice->load(['expenseAssociatedInvoices', 'currencyType']);
             $expenseAccessor = new InvoiceExpenseAccessor($invoice);
 
-            if (request()->has('no_expenses') || floatval($expenses) > 0) {
+            if ($noExpenses || (float) $expenses > 0) {
 
                 $invoice->net_gain         = $expenseAccessor->calculateNetProfit();
                 $totalIncome               = $expenseAccessor->calculateIncome();

@@ -47,6 +47,7 @@ class Invoice extends Model
             'quantity',
             'vat',
             'expenses',
+            'no_expenses',
             'expense_protocol_ref',
             'net_gain',
             'net_gain_percent',
@@ -78,6 +79,7 @@ class Invoice extends Model
             'amount'           => PriceInteger::class,
             'vat'              => PriceInteger::class,
             'expenses'         => NullablePriceInteger::class,
+            'no_expenses'      => 'bool',
             'net_gain'         => NullablePriceInteger::class,
             'net_gain_percent' => NullablePriceInteger::class,
         ];
@@ -85,6 +87,7 @@ class Invoice extends Model
     protected $attributes
         = [
             'doc_type' => self::DEFAULT_DOC_TYPE,
+            'no_expenses' => false,
         ];
 
     public function __construct(array $attributes = [])
