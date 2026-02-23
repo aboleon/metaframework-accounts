@@ -15,11 +15,12 @@ use MetaFramework\Accounts\Models\PayMeansChannels;
 use MetaFramework\Accounts\Models\PayMeansChannelsData;
 use MetaFramework\Services\Validation\ValidationInstance;
 use MetaFramework\Support\Traits\Responses;
-use Project;
+use MetaFramework\Traits\Locale;
 use Throwable;
 
 class PayMeansChannelController
 {
+    use Locale;
     use Responses;
 
     public function index(?int $payMean = null): View
@@ -53,7 +54,7 @@ class PayMeansChannelController
                 'pay_mean_id' => (int) ($validated['category'] ?? 0),
             ]);
 
-            foreach (Project::locales() as $locale) {
+            foreach ((array) $this->projectLocales() as $locale) {
                 PayMeansChannelsData::query()->firstOrCreate([
                     'pay_channel_id' => $channel->id,
                     'lg' => $locale,
@@ -96,7 +97,7 @@ class PayMeansChannelController
                 'bank_account_id' => $validated['bank_account_id'] ?? null,
             ]);
 
-            foreach (Project::locales() as $locale) {
+            foreach ((array) $this->projectLocales() as $locale) {
                 PayMeansChannelsData::query()->updateOrCreate(
                     [
                         'pay_channel_id' => $payMeansChannel->id,
