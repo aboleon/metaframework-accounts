@@ -16,6 +16,8 @@ class AjaxController
 {
     use Ajax;
 
+    private static ?bool $activityLogAvailable = null;
+
     public function __invoke(Request $request): array|JsonResponse
     {
         // Normalize legacy ajax_action to the MetaFramework "action" key.
@@ -114,6 +116,14 @@ class AjaxController
 
     private function logAjaxActivity(string $modelClass, int $modelId, string $method): void
     {
+        if (self::$activityLogAvailable === null) {
+            self::$activityLogAvailable = function_exists('activity');
+        }
+
+        if (!self::$activityLogAvailable) {
+            return;
+        }
+
         activity()
             ->causedBy(auth()->user())
             ->withProperties([
