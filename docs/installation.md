@@ -12,6 +12,8 @@
 composer require aboleon/metaframework-accounts
 ```
 
+`metaframework-accounts` depends on the MetaFramework package stack and companion MetaFramework packages. Composer installs these automatically from the package dependency graph.
+
 Laravel's package auto-discovery registers the service provider automatically:
 
 ```
@@ -39,4 +41,4 @@ This creates all `mfw_accounts_*` tables in the configured database. See [Databa
 | `barryvdh/laravel-dompdf` | `^3.1` | PDF generation |
 | `maatwebsite/excel` | `^3.1` | Excel export |
 
-All dependencies are declared in the package `composer.json` and installed automatically via Composer.
+This package intentionally keeps a minimal Composer manifest and relies on the MetaFramework packages above for shared Laravel/Illuminate dependencies.

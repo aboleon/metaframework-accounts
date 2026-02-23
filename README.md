@@ -2,6 +2,8 @@
 
 Accounts and invoices package for MetaFramework-based Laravel applications.
 
+This package relies on the MetaFramework package stack (notably `aboleon/metaframework` and companion MetaFramework packages). It is not intended to be used as a standalone package without MetaFramework.
+
 ## What this package provides
 
 - Accounts / clients management with multi-address support and Google Places integration
@@ -19,6 +21,8 @@ Accounts and invoices package for MetaFramework-based Laravel applications.
 composer require aboleon/metaframework-accounts
 php artisan migrate
 ```
+
+Composer installs the required MetaFramework packages automatically because they are declared as package dependencies.
 
 Laravel package discovery registers `MetaFramework\Accounts\Providers\AccountsServiceProvider` automatically.
 
@@ -52,4 +56,4 @@ Laravel package discovery registers `MetaFramework\Accounts\Providers\AccountsSe
 - Route prefix is configurable via `config('mfw-accounts.route_prefix')`; route names are stable (`mfw-accounts.*`).
 - The front account skeleton (`mfw-accounts-front` tag or `php artisan mfw-accounts:front`) is optional and must be explicitly installed.
 - Backward-compatibility alias: the tag `mfw-account` (without trailing `s`) maps to the same skeleton.
-- Legacy `thesaurus_*` table renames must be handled in the host application; do not modify package migrations.
+- Legacy host table renames/migrations must be handled in the host application; do not modify package migrations.

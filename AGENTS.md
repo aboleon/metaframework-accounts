@@ -45,8 +45,8 @@ php artisan module:make-migration exampleOfMigration ModuleName #migration name 
 
 ## Commit & Pull Request Guidelines
 - DO NOT COMMIT OR PUSH ON YOUR OWN !!!
-- when asked to do a commit, if modules(s) is/are involved, prefix the commit message with their names (ex. Thesaurus:, Thesaurus, Seller:)
-- Commit messages: use concise, present-tense summaries (e.g., “Add: mfw modal actions to Thesaurus index views”). Group related changes per commit.
+- when asked to do a commit, if modules(s) is/are involved, prefix the commit message with their names (ex. Accounts:, Hermes:, Seller:)
+- Commit messages: use concise, present-tense summaries (e.g., “Add: mfw modal actions to Accounts index views”). Group related changes per commit.
 - use labels to clearly indicate nature of changes : Add:(additions,creations),Bugfix:(for bugs),Fix:(for corrections),Update:(for enhancements)
 - Pull requests: include a short description of scope, linked issue/ticket if any, setup steps, and screenshots for UI changes. Note any migrations or breaking changes explicitly.
 
