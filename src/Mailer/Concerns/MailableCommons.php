@@ -37,6 +37,13 @@ trait MailableCommons
 
     public function from(): string|array|Address
     {
+        if (method_exists($this, 'resolveMailerFromAddress') && method_exists($this, 'resolveMailerFromName')) {
+            return new Address(
+                (string) $this->resolveMailerFromAddress(),
+                (string) $this->resolveMailerFromName(),
+            );
+        }
+
         $name = __('mfw.mailer.from_name');
 
         if ($name === 'mfw.mailer.from_name') {

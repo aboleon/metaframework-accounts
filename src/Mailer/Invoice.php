@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Mailer;
 
-use MetaFramework\Mailer\Mailer\MailerAbstract;
 use MetaFramework\Accounts\Mailer\Concerns\MailableCommons;
 use MetaFramework\Accounts\Models\Invoice as InvoiceModel;
+use MetaFramework\Mailer\Mailer\MailerAbstract;
 
 class Invoice extends MailerAbstract
 {
@@ -49,7 +49,18 @@ class Invoice extends MailerAbstract
 
     public function email(): string|array
     {
-        return $this->invoice->client->email;
+        $email = (string) ($this->invoice?->client?->email ?? '');
+        $name = trim((string) ($this->invoice?->client?->first_name ?? '') . ' ' . (string) ($this->invoice?->client?->last_name ?? ''));
+
+        if ($email === '') {
+            return '';
+        }
+
+        if ($name === '') {
+            return $email;
+        }
+
+        return [$email => $name];
     }
 
     public function subject(): string
@@ -88,7 +99,3 @@ class Invoice extends MailerAbstract
         return __('mfw-accounts::mailer/invoice.failure', [], $this->locale);
     }
 }
-
-
-
-
