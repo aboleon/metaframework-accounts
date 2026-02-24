@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 return [
-    'subject' => 'Your Patrimonia invoice',
+    'subject' => 'Your invoice',
     'not_found' => 'Invoice not found',
     'success' => 'The invoice has been sent by email.',
     'failure' => 'The invoice could not be sent.',
@@ -22,9 +22,9 @@ return [
     'download_pdf' => 'Download the PDF invoice',
     'closing' => 'I remain at your disposal for any questions.',
 
-    'agency_description' => 'Travel agency specialized in Bulgaria',
-    'phone_bg' => 'Phone Bulgaria',
-    'phone_fr' => 'Phone France',
-    'licence' => 'Tour operator / Travel agency license: RK-5900',
-    'vat_number' => 'EU VAT',
+    'agency_description' => 'Your company description',
+    'phone_bg' => 'Phone',
+    'phone_fr' => 'Phone (2)',
+    'licence' => 'License:',
+    'vat_number' => 'VAT',
 ];

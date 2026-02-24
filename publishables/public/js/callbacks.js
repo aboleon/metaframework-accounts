@@ -4,6 +4,39 @@ function mfwAccountsMetaRoute(name) {
     return meta ? meta.getAttribute('content') : null;
 }
 
+function mfwAccountsRoutePrefix() {
+    var prefix = mfwAccountsMetaRoute('mfw-accounts-route-prefix') || 'mfw-accounts';
+
+    prefix = prefix.replace(/^\/+|\/+$/g, '');
+
+    return prefix || 'mfw-accounts';
+}
+
+function mfwAccountsBaseRoute() {
+    var ajaxRoute = mfwAccountsMetaRoute('ajax-route');
+    var prefix = mfwAccountsRoutePrefix();
+    var path = window.location && window.location.pathname ? window.location.pathname : '';
+    var marker = '/' + prefix;
+    var markerIndex = path.indexOf(marker);
+
+    if (ajaxRoute) {
+        return ajaxRoute.replace(/\/ajax(?:\?.*)?$/, '');
+    }
+
+    if (markerIndex !== -1) {
+        return path.substring(0, markerIndex + marker.length);
+    }
+
+    return base_url(prefix);
+}
+
+function mfwAccountsBackendRoute(path) {
+    var base = mfwAccountsBaseRoute().replace(/\/+$/, '');
+    var suffix = String(path || '').replace(/^\/+/, '');
+
+    return suffix ? base + '/' + suffix : base;
+}
+
 function mfwAccountsRouteFromTemplate(metaName, token, value, fallback) {
     var template = mfwAccountsMetaRoute(metaName);
 
@@ -22,7 +55,7 @@ var invoice = {
                     'mfw-accounts-invoice-edit-route-template',
                     '__MFW_INVOICE_ID__',
                     data.callback_id,
-                    base_url()+'panel/mfw-accounts/invoices/edit/'+data.callback_id
+                    mfwAccountsBackendRoute('invoices/edit/' + data.callback_id)
                 )
             );
         }
@@ -36,7 +69,7 @@ var clients = {
                     'mfw-accounts-client-edit-route-template',
                     '__MFW_CLIENT_ID__',
                     data.callback_id,
-                    base_url()+'panel/mfw-accounts/clients/edit/'+data.callback_id
+                    mfwAccountsBackendRoute('clients/edit/' + data.callback_id)
                 )
             );
         }
@@ -44,7 +77,7 @@ var clients = {
     liste : function(clients) {
        $('#mfw_accounts_client').find('.suggestions').remove();
        var h = '<div class="suggestions"><ul>';
-       var clientCreateRoute = mfwAccountsMetaRoute('mfw-accounts-client-create-route') || 'panel/mfw-accounts/clients/add';
+       var clientCreateRoute = mfwAccountsMetaRoute('mfw-accounts-client-create-route') || mfwAccountsBackendRoute('clients/add');
        $(clients).each(function(index, client) {
         h = h.concat('<li><span class="id hidden">'+client.id+'</span><span class="text">'+client.prenom+' '+ client.nom + ' '+ client.societe +'</span></li>');
     });
