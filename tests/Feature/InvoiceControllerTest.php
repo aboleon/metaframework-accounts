@@ -6,6 +6,7 @@ namespace MetaFramework\Accounts\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\View;
 use MetaFramework\Accounts\Http\Controllers\InvoiceController;
 use MetaFramework\Accounts\Models\Invoice;
@@ -292,6 +293,27 @@ class InvoiceControllerTest extends TestCase
         $this->assertSame($invoice->id, $data['invoice']->id);
         $this->assertSame('bg', $data['locale']);
         $this->assertNotEmpty($data['pdf_url']);
+    }
+
+    public function test_mail_preview_renders_single_line_total_using_quantity_without_redividing_casted_prices(): void
+    {
+        $this->seedCurrency(['id' => 1, 'name' => 'Euro', 'code' => 'EUR', 'sign' => 'EUR']);
+        Blade::anonymousComponentPath(__DIR__ . '/../stubs/views/components');
+
+        $invoice = $this->createInvoice([
+            'document_id' => 401,
+            'hash' => str_repeat('c', 40),
+            'pdf_locale' => 'fr',
+            'amount' => 311,
+            'quantity' => 2,
+            'vat' => 0,
+        ]);
+
+        $view = (new InvoiceController)->mailPreview($invoice->hash);
+        $html = $view->render();
+
+        $this->assertStringContainsString('622 EUR', $html);
+        $this->assertStringNotContainsString('3,11 EUR', $html);
     }
 
     private function validUpdatePayload(Invoice $invoice, array $overrides = []): array
