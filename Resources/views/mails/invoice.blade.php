@@ -1,7 +1,45 @@
 <x-front-mail :title="__('mfw-accounts::mailer/invoice.subject', [], $locale)" :preheader="__('mfw-accounts::mailer/invoice.intro', [], $locale)" :locale="$locale">
     @php
         $clientName = html_entity_decode(trim($client->first_name . ' ' . $client->last_name), ENT_QUOTES);
-        $signatureName = auth()->user()?->names() ?? 'Andrian MIHAILOV';
+        $signatureName = auth()->user()?->names();
+
+        if (empty($signatureName)) {
+            $translationKey = trim((string) config('mfw.mailer.from.translation_key', 'mfw.mailer.from_name'));
+            $strictLocaleTranslation = (bool) config('mfw.mailer.from.strict_locale_translation', true);
+
+            if ($translationKey !== '') {
+                $hasForLocale =
+                    $locale !== ''
+                        ? \Illuminate\Support\Facades\Lang::hasForLocale($translationKey, $locale)
+                        : \Illuminate\Support\Facades\Lang::has($translationKey);
+
+                if ($hasForLocale) {
+                    $translated = trim((string) __($translationKey, [], $locale));
+
+                    if ($translated !== '' && $translated !== $translationKey) {
+                        $signatureName = $translated;
+                    }
+                } elseif (!$strictLocaleTranslation) {
+                    $translated = trim((string) __($translationKey));
+
+                    if ($translated !== '' && $translated !== $translationKey) {
+                        $signatureName = $translated;
+                    }
+                }
+            }
+
+            if (empty($signatureName)) {
+                $signatureName = trim((string) config('mfw.mailer.from.name', ''));
+            }
+
+            if ($signatureName === '') {
+                $signatureName = trim((string) config('mail.from.name', ''));
+            }
+
+            if ($signatureName === '') {
+                $signatureName = (string) config('app.name');
+            }
+        }
     @endphp
 
     <p>

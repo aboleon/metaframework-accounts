@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Mailer;
 
+use Illuminate\Mail\Mailables\Address;
 use MetaFramework\Accounts\Mailer\Concerns\MailableCommons;
 use MetaFramework\Accounts\Models\Invoice as InvoiceModel;
 use MetaFramework\Mailer\Mailer\MailerAbstract;
@@ -47,7 +48,7 @@ class Invoice extends MailerAbstract
         return $this;
     }
 
-    public function email(): string|array
+    public function email(): string|array|Address
     {
         $email = (string) ($this->invoice?->client?->email ?? '');
         $name = trim((string) ($this->invoice?->client?->first_name ?? '') . ' ' . (string) ($this->invoice?->client?->last_name ?? ''));
@@ -60,7 +61,7 @@ class Invoice extends MailerAbstract
             return $email;
         }
 
-        return [$email => $name];
+        return new Address($email, $name);
     }
 
     public function subject(): string
@@ -71,6 +72,11 @@ class Invoice extends MailerAbstract
     public function view(): string
     {
         return 'mfw-accounts::mails.invoice';
+    }
+
+    public function textView(): string
+    {
+        return 'mfw-accounts::mails.invoice_plain';
     }
 
     public function whenSent(): void

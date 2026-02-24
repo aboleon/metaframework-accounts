@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 return [
-    'subject' => 'Votre facture Patrimonia',
+    'subject' => 'Votre facture',
     'not_found' => 'Facture introuvable',
     'success' => 'La facture a été envoyée par e-mail.',
     'failure' => 'La facture n\'a pas pu être envoyée.',
@@ -22,9 +22,9 @@ return [
     'download_pdf' => 'Télécharger la facture PDF',
     'closing' => 'Je reste à votre disposition pour répondre à toute question.',
 
-    'agency_description' => 'Agence de voyages spécialisée Bulgarie',
-    'phone_bg' => 'Tél Bulgarie',
-    'phone_fr' => 'Tél France',
-    'licence' => 'Licence Tour-opérateur / Agence de voyage : RK-5900',
-    'vat_number' => 'TVA EU',
+    'agency_description' => 'Description de votre entreprise',
+    'phone_bg' => 'Téléphone',
+    'phone_fr' => 'Téléphone (2)',
+    'licence' => 'Licence :',
+    'vat_number' => 'TVA',
 ];

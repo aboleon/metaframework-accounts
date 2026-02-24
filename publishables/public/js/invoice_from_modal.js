@@ -4,6 +4,39 @@ function mfwAccountsMetaRoute(name) {
     return meta ? meta.getAttribute('content') : null;
 }
 
+function mfwAccountsRoutePrefix() {
+    let prefix = mfwAccountsMetaRoute('mfw-accounts-route-prefix') || 'mfw-accounts';
+
+    prefix = prefix.replace(/^\/+|\/+$/g, '');
+
+    return prefix || 'mfw-accounts';
+}
+
+function mfwAccountsBaseRoute() {
+    const ajaxRoute = mfwAccountsMetaRoute('ajax-route');
+    const prefix = mfwAccountsRoutePrefix();
+    const path = window.location && window.location.pathname ? window.location.pathname : '';
+    const marker = '/' + prefix;
+    const markerIndex = path.indexOf(marker);
+
+    if (ajaxRoute) {
+        return ajaxRoute.replace(/\/ajax(?:\?.*)?$/, '');
+    }
+
+    if (markerIndex !== -1) {
+        return path.substring(0, markerIndex + marker.length);
+    }
+
+    return base_url(prefix);
+}
+
+function mfwAccountsBackendRoute(path) {
+    const base = mfwAccountsBaseRoute().replace(/\/+$/, '');
+    const suffix = String(path || '').replace(/^\/+/, '');
+
+    return suffix ? base + '/' + suffix : base;
+}
+
 function mfwAccountsRouteFromTemplate(metaName, token, value, fallback) {
     const template = mfwAccountsMetaRoute(metaName);
 
@@ -115,7 +148,7 @@ function handleInvoiceMailerPreviewShow(event) {
         'mfw-accounts-invoice-mail-preview-route-template',
         '__MFW_INVOICE_HASH__',
         hash,
-        base_url('panel/mfw-accounts/invoices/mail-preview/' + encodeURIComponent(hash))
+        mfwAccountsBackendRoute('invoices/mail-preview/' + encodeURIComponent(hash))
     );
     modalBody.html(
         '<div class="invoice-mailer-meta" style="padding: 12px 0 8px;">' +
