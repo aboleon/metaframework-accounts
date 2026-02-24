@@ -50,8 +50,8 @@
                     <img src="{{ asset('vendor/mfw/flags/' . $data->pdf_locale . '.svg') }}" class="me-1"
                         style="max-height: 20px; border:1px solid white" alt="" />
 
-                    <a href="{!! url('mfw-accounts/pdf/' . $data->hash) !!}" target="_blank" data-bs-toggle="tooltip" data-bs-placement="top"
-                        data-bs-title="PDF" class="btn btn-danger d-flex align-items-center">
+                    <a href="{{ route('mfw-accounts.pdf', $data->hash) }}" target="_blank" data-bs-toggle="tooltip"
+                        data-bs-placement="top" data-bs-title="PDF" class="btn btn-danger d-flex align-items-center">
 
                         <i class="bi bi-file-earmark-pdf"></i>
                     </a>

@@ -60,7 +60,7 @@ class AccountsServiceProvider extends ServiceProvider
             $this->publishes($this->translationPublishPaths(), 'mfw-accounts-translations');
 
             $this->publishes([
-                __DIR__ . '/../../Resources/public' => public_path('vendor/mfw-accounts'),
+                __DIR__ . '/../../publishables/public' => public_path('vendor/mfw-accounts'),
             ], 'mfw-accounts-assets');
 
             $this->publishes([

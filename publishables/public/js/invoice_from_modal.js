@@ -1,3 +1,19 @@
+function mfwAccountsMetaRoute(name) {
+    const meta = document.querySelector('meta[name="' + name + '"]');
+
+    return meta ? meta.getAttribute('content') : null;
+}
+
+function mfwAccountsRouteFromTemplate(metaName, token, value, fallback) {
+    const template = mfwAccountsMetaRoute(metaName);
+
+    if (!template) {
+        return fallback;
+    }
+
+    return template.replace(token, encodeURIComponent(value));
+}
+
 function bindSendInvoiceByMail() {
     bindInvoiceMailerPreview();
     bindInvoiceMailerFooter();
@@ -95,7 +111,12 @@ function handleInvoiceMailerPreviewShow(event) {
     });
     modalBody.css('padding', '0');
 
-    const url = base_url('panel/mfw-accounts/invoices/mail-preview/' + encodeURIComponent(hash));
+    const url = mfwAccountsRouteFromTemplate(
+        'mfw-accounts-invoice-mail-preview-route-template',
+        '__MFW_INVOICE_HASH__',
+        hash,
+        base_url('panel/mfw-accounts/invoices/mail-preview/' + encodeURIComponent(hash))
+    );
     modalBody.html(
         '<div class="invoice-mailer-meta" style="padding: 12px 0 8px;">' +
             '<div class="invoice-mailer-messages" style="padding: 0 20px 12px;"></div>' +

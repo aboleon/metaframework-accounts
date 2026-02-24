@@ -19,7 +19,7 @@
 
     @include('mfw-accounts::account.dashboard_card')
 
-    <table class="table table-striped table-bordered nowrap table-hover">
+    <table class="table-striped table-bordered nowrap table-hover table">
         <caption>
             @if (request()->has('sale_id'))
                 {{ __('mfw-accounts::ui.limited_view') . ' - ' }}
@@ -60,7 +60,8 @@
                         {{ $item->title ?: __('mfw-accounts::ui.untitled') }}
                     </a>
                 </td>
-                <td class="text-right">{{ Prices::readableFormat(price: $item->amount, currency: '', stripZeros: true) }}</td>
+                <td class="text-right">{{ Prices::readableFormat(price: $item->amount, currency: '', stripZeros: true) }}
+                </td>
                 <td>{{ $item->currencyType?->code }}</td>
                 <td>{{ $item->vat }}</td>
                 <td class="{{ !is_null($item->date_paid) ? 'bg-success' : null }}">
@@ -71,7 +72,7 @@
                     <ul class="mfw-actions flex-nowrap">
                         <x-mfw::edit-link :route="route('mfw-accounts.invoices.edit', $item)" />
                         <li>
-                            <a href="{{ url('mfw-accounts/pdf/' . $item->hash) }}" target="_blank" class="btn btn-danger"
+                            <a href="{{ route('mfw-accounts.pdf', $item->hash) }}" target="_blank" class="btn btn-danger"
                                 title="PDF" data-bs-toggle="tooltip">
                                 <i class="bi bi-file-earmark-pdf"></i>
                             </a>
@@ -92,7 +93,7 @@
                         <ul class="mfw-actions flex-nowrap">
                             <x-mfw::edit-link :route="route('mfw-accounts.invoices.edit', $d)" />
                             <li>
-                                <a href="{{ url('mfw-accounts/pdf/' . $d->hash) }}" target="_blank"
+                                <a href="{{ route('mfw-accounts.pdf', $d->hash) }}" target="_blank"
                                     class="label label-default flag" title="PDF" data-bs-toggle="tooltip">
                                     <img src="{{ asset('vendor/mfw/flags/' . $d->pdf_locale . '.svg') }}" alt="" />
                                 </a>
