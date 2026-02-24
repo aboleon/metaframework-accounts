@@ -47,7 +47,7 @@
             @if ($data)
                 <div class="d-flex align-items-center gap-2">
 
-                    <img src="{{ asset('vendor/mfw/flags/' . $data->pdf_locale . '.svg') }}" class="me-1"
+                    <img src="{{ asset('vendor/mfw/flags/4x3/' . $data->pdf_locale . '.svg') }}" class="me-1"
                         style="max-height: 20px; border:1px solid white" alt="" />
 
                     <a href="{{ route('mfw-accounts.pdf', $data->hash) }}" target="_blank" data-bs-toggle="tooltip"

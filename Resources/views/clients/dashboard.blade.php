@@ -95,7 +95,7 @@
                             <li>
                                 <a href="{{ route('mfw-accounts.pdf', $d->hash) }}" target="_blank"
                                     class="label label-default flag" title="PDF" data-bs-toggle="tooltip">
-                                    <img src="{{ asset('vendor/mfw/flags/' . $d->pdf_locale . '.svg') }}" alt="" />
+                                    <img src="{{ asset('vendor/mfw/flags/4x3/' . $d->pdf_locale . '.svg') }}" alt="" />
                                 </a>
                             </li>
                             <li>
