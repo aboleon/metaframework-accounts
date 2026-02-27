@@ -7,7 +7,7 @@
         "php": "^8.3",
         "maatwebsite/excel": "^3.1",
         "barryvdh/laravel-dompdf": "^3.1",
-        "aboleon/metaframework": "dev-mfw-2026||^1.0",
+        "aboleon/metaframework": "^1.0",
         "aboleon/metaframework-google-places": "^1.2",
         "aboleon/metaframework-mailer": "0.*",
         "aboleon/metaframework-mediaclass": "0.*"
