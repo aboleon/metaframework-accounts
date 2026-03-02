@@ -1,4 +1,4 @@
-<div class="row account-search {{ $class }}" id="{{ $id }}"
+<div class="row account-search mb-3 {{ $class }}" id="{{ $id }}"
     data-multiple="{{ $multiple ? 'true' : 'false' }}">
     @if ($showToggle)
         <div class="col-12">
