@@ -1,9 +1,9 @@
-<div class="row account-search mb-3 {{ $class }}" id="{{ $id }}"
+<div class="row account-search {{ $class }}" id="{{ $id }}"
     data-multiple="{{ $multiple ? 'true' : 'false' }}">
     @if ($showToggle)
         <div class="col-12">
             <x-mfw-inputable::checkbox name="{{ $toggleName }}" :label="$label" :affected="$checked" :switch="true"
-                class="account-search-toggle" />
+                class="account-search-toggle mb-3" />
         </div>
     @endif
     <div class="col-12 account-search-fields" style="{{ $showToggle && !$checked ? 'display: none;' : '' }}">
