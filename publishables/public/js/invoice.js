@@ -79,6 +79,10 @@ function toNumber(value) {
     return parseFloat(normalized) || 0;
 }
 
+function trimValue(value) {
+    return String(value ?? '').trim();
+}
+
 function updateConvertedTotal(total) {
     var $converted = $('#totalSUMConverted');
     if ($converted.length === 0) {
@@ -146,14 +150,14 @@ $(function() {
         var $dateBefore = $('input[name="date_before"]');
         var $datePaid = $('input[name="date_paid"]');
 
-        if (selectedValue === 'date_before' && $.trim($dateBefore.val()) === '') {
+        if (selectedValue === 'date_before' && trimValue($dateBefore.val()) === '') {
             $dateBefore.addClass('is-invalid');
             e.preventDefault();
             e.stopImmediatePropagation();
             return false;
         }
 
-        if (selectedValue === 'date_paid' && $.trim($datePaid.val()) === '') {
+        if (selectedValue === 'date_paid' && trimValue($datePaid.val()) === '') {
             var now = new Date();
             var day = String(now.getDate()).padStart(2, '0');
             var month = String(now.getMonth() + 1).padStart(2, '0');
@@ -201,7 +205,7 @@ $(function() {
         var selectedValue = $('input[name=paid]:checked').val();
         var $dateBefore = $('input[name="date_before"]');
 
-        if (selectedValue === 'date_before' && $.trim($dateBefore.val()) === '') {
+        if (selectedValue === 'date_before' && trimValue($dateBefore.val()) === '') {
             $dateBefore.addClass('is-invalid');
             e.preventDefault();
             return;
@@ -211,7 +215,7 @@ $(function() {
     });
 
     $('input[name="date_before"]').on('input change', function() {
-        if ($.trim($(this).val()) !== '') {
+        if (trimValue($(this).val()) !== '') {
             $(this).removeClass('is-invalid');
         }
     });
