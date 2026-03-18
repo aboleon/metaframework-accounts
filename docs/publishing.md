@@ -7,7 +7,7 @@
 | `mfw-accounts-config` | `vendor:publish --tag=mfw-accounts-config` | `config/mfw-accounts.php` |
 | `mfw-user-types` | `vendor:publish --tag=mfw-user-types` | `config/mfw-user-types.php` |
 | `mfw-accounts-assets` | `vendor:publish --tag=mfw-accounts-assets` | `public/vendor/mfw-accounts/` |
-| `mfw-accounts-views` | `vendor:publish --tag=mfw-accounts-views` | `resources/views/modules/mfw-accounts/` |
+| `mfw-accounts-views` | `vendor:publish --tag=mfw-accounts-views` | `resources/views/vendor/mfw-accounts/` |
 | `mfw-accounts-translations` | `vendor:publish --tag=mfw-accounts-translations` | `lang/modules/mfw-accounts/` |
 
 ## Config
@@ -40,7 +40,7 @@ Publishes CSS, JS, and image assets to `public/vendor/mfw-accounts/`. Required f
 php artisan vendor:publish --tag=mfw-accounts-views
 ```
 
-Publishes all Blade views to `resources/views/modules/mfw-accounts/`. Once published, Laravel loads the application's copy instead of the package copy, allowing full view customisation.
+Publishes all Blade views to `resources/views/vendor/mfw-accounts/`. Once published, Laravel loads the application's copy instead of the package copy, allowing full view customisation.
 
 ## Translations
 

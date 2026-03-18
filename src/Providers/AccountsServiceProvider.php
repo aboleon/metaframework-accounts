@@ -7,7 +7,6 @@ namespace MetaFramework\Accounts\Providers;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -54,7 +53,7 @@ class AccountsServiceProvider extends ServiceProvider
             ], 'mfw-accounts-user-types');
 
             $this->publishes([
-                __DIR__ . '/../../Resources/views' => resource_path('views/modules/mfw-accounts'),
+                __DIR__ . '/../../Resources/views' => resource_path('views/vendor/mfw-accounts'),
             ], 'mfw-accounts-views');
 
             $this->publishes($this->translationPublishPaths(), 'mfw-accounts-translations');
@@ -76,12 +75,10 @@ class AccountsServiceProvider extends ServiceProvider
 
     protected function registerViews(): void
     {
-        $viewPath = resource_path('views/modules/mfw-accounts');
         $sourcePath = __DIR__ . '/../../Resources/views';
+        $viewPath = resource_path('views/vendor/mfw-accounts');
 
-        $this->loadViewsFrom(array_merge(array_map(static function (string $path): string {
-            return $path . '/modules/mfw-accounts';
-        }, Config::get('view.paths')), [$sourcePath]), 'mfw-accounts');
+        $this->loadViewsFrom($sourcePath, 'mfw-accounts');
 
         $this->publishes([
             $sourcePath => $viewPath,
