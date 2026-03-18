@@ -18,7 +18,7 @@ class AccountAddEditTest extends TestCase
     {
         $this->actingAs($this->createSystemUser());
 
-        $response = $this->get('/panel/mfw-accounts/clients/add');
+        $response = $this->get($this->accountsPath('clients/add'));
 
         $response->assertOk();
         $response->assertViewIs('mfw-accounts::clients.edit');
@@ -30,7 +30,7 @@ class AccountAddEditTest extends TestCase
         $this->actingAs($this->createSystemUser());
         $account = $this->createAccount();
 
-        $response = $this->get('/panel/mfw-accounts/clients/edit/' . $account->id);
+        $response = $this->get($this->accountsPath('clients/edit/' . $account->id));
 
         $response->assertOk();
         $response->assertViewIs('mfw-accounts::clients.edit');
@@ -136,5 +136,13 @@ class AccountAddEditTest extends TestCase
             'locale' => 'fr',
             'civ' => 'A',
         ]);
+    }
+
+    private function accountsPath(string $suffix = ''): string
+    {
+        $prefix = trim((string) config('mfw-accounts.route_prefix', 'mfw-accounts'), '/');
+        $path = '/' . ($prefix !== '' ? $prefix : 'mfw-accounts');
+
+        return $suffix !== '' ? $path . '/' . ltrim($suffix, '/') : $path;
     }
 }

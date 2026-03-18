@@ -17,10 +17,12 @@ class AccountAddEditTest extends DuskTestCase
         $systemUser = $this->createSystemUser();
         $email = 'dusk-mfw-accounts-add-' . Str::uuid() . '@example.com';
         $createdClientId = 0;
+        $accountsPath = $this->accountsPath();
+        $resourceEditPattern = '#^' . preg_quote($accountsPath . '/clients/', '#') . '\d+/edit$#';
 
-        $this->browse(function (Browser $browser) use ($systemUser, $email, &$createdClientId): void {
+        $this->browse(function (Browser $browser) use ($systemUser, $email, &$createdClientId, $accountsPath, $resourceEditPattern): void {
             $browser->loginAs($systemUser)
-                ->visit('/panel/mfw-accounts/clients/add')
+                ->visit($accountsPath . '/clients/add')
                 ->waitFor('#account-client-form')
                 ->type('first_name', 'Dusk')
                 ->type('last_name', 'Created')
@@ -31,15 +33,15 @@ class AccountAddEditTest extends DuskTestCase
             $browser->script("document.querySelector('#account-client-form .ajaxable').click();");
 
             $browser
-                ->waitUsing(15, 250, function () use ($browser): bool {
+                ->waitUsing(15, 250, function () use ($browser, $resourceEditPattern): bool {
                     $path = (string) parse_url($browser->driver->getCurrentURL(), PHP_URL_PATH);
 
-                    return preg_match('#^/panel/mfw-accounts/clients/\d+/edit$#', $path) === 1;
+                    return preg_match($resourceEditPattern, $path) === 1;
                 }, 'Timed out waiting for redirect to the client edit page.')
-                ->assertPathBeginsWith('/panel/mfw-accounts/clients/');
+                ->assertPathBeginsWith($accountsPath . '/clients/');
 
             $path = (string) parse_url($browser->driver->getCurrentURL(), PHP_URL_PATH);
-            preg_match('#^/panel/mfw-accounts/clients/(\d+)/edit$#', $path, $matches);
+            preg_match('#^' . preg_quote($accountsPath . '/clients/', '#') . '(\d+)/edit$#', $path, $matches);
             $createdClientId = (int) ($matches[1] ?? 0);
         });
 
@@ -58,10 +60,11 @@ class AccountAddEditTest extends DuskTestCase
         $account = $this->createAccount();
         $newEmail = 'dusk-mfw-accounts-edit-' . Str::uuid() . '@example.com';
         $newPhone = '+35982222222';
+        $accountsPath = $this->accountsPath();
 
-        $this->browse(function (Browser $browser) use ($systemUser, $account, $newEmail, $newPhone): void {
+        $this->browse(function (Browser $browser) use ($systemUser, $account, $newEmail, $newPhone, $accountsPath): void {
             $browser->loginAs($systemUser)
-                ->visit('/panel/mfw-accounts/clients/edit/' . $account->id)
+                ->visit($accountsPath . '/clients/edit/' . $account->id)
                 ->waitFor('#account-client-form')
                 ->type('phone', $newPhone)
                 ->type('email', $newEmail)
@@ -70,11 +73,11 @@ class AccountAddEditTest extends DuskTestCase
             $browser->script("document.querySelector('#account-client-form .ajaxable').click();");
 
             $browser
-                ->waitUsing(8, 250, function () use ($browser, $account): bool {
+                ->waitUsing(8, 250, function () use ($browser, $account, $accountsPath): bool {
                     return (string) parse_url($browser->driver->getCurrentURL(), PHP_URL_PATH)
-                        === '/panel/mfw-accounts/clients/' . $account->id . '/edit';
+                        === $accountsPath . '/clients/' . $account->id . '/edit';
                 }, 'Timed out waiting for account edit page to remain open after save.')
-                ->assertPathIs('/panel/mfw-accounts/clients/' . $account->id . '/edit');
+                ->assertPathIs($accountsPath . '/clients/' . $account->id . '/edit');
         });
 
         $this->assertDatabaseHas('users', [
@@ -107,5 +110,12 @@ class AccountAddEditTest extends DuskTestCase
             'locale' => 'fr',
             'civ' => 'A',
         ]);
+    }
+
+    private function accountsPath(): string
+    {
+        $prefix = trim((string) config('mfw-accounts.route_prefix', 'mfw-accounts'), '/');
+
+        return '/' . ($prefix !== '' ? $prefix : 'mfw-accounts');
     }
 }
