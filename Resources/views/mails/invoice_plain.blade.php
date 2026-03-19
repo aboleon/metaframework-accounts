@@ -1,5 +1,23 @@
 @php
-    $clientName = html_entity_decode(trim($client->first_name . ' ' . $client->last_name), ENT_QUOTES);
+    $civilityTranslationKey = [
+        'A' => 'M',
+        'B' => 'Mme',
+        'C' => 'Mlle',
+        'M' => 'M',
+        'Mme' => 'Mme',
+        'Mlle' => 'Mlle',
+    ][(string) ($client->civ ?? '')] ?? [
+        'A' => 'M',
+        'B' => 'Mme',
+        'C' => 'Mlle',
+    ][(string) config('mfw-accounts.client.default_civility', 'A')] ?? null;
+    $civility = $civilityTranslationKey
+        ? trim((string) __('mfw-accounts::ui.mail_civility.' . $civilityTranslationKey, [], $locale))
+        : '';
+    if ($civilityTranslationKey && $civility === 'mfw-accounts::ui.mail_civility.' . $civilityTranslationKey) {
+        $civility = '';
+    }
+    $clientName = html_entity_decode(trim(trim($civility . ' ' . (string) $client->last_name)), ENT_QUOTES);
     $signatureName = auth()->user()?->names();
 
     if (empty($signatureName)) {
