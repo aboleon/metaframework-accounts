@@ -67,6 +67,7 @@
                     ? $business?->translation('name', $accountLocale)
                     : trim($item->translation('last_name', $accountLocale) . ' ' . $item->translation('first_name', $accountLocale));
                 $nomail = str_contains($item->email,'random_');
+                $canDelete = (int) ($item->invoices_count ?? 0) === 0 && (int) ($item->offers_count ?? 0) === 0;
             @endphp
 
             <tr>
@@ -109,12 +110,21 @@
                 <td>
                     <ul class="mfw-actions">
                         <x-mfw::edit-link :route="route('mfw-accounts.clients.edit', $item->id)"/>
-                        <x-mfw::delete-modal-link reference="client_{{ $item->id }}"/>
+                        <li>
+                            @include('mfw-accounts::clients.send_welcome_mail_action', [
+                                'account' => $item,
+                            ])
+                        </li>
+                        @if($canDelete)
+                            <x-mfw::delete-modal-link reference="client_{{ $item->id }}"/>
+                        @endif
                     </ul>
-                    <x-mfw::modal :route="route('mfw-accounts.clients.destroy', $item->id)"
-                                  title="{{ __('mfw.delete') }}"
-                                  question="{!! __('mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. $accountName }}</b>"
-                                  reference="destroy_client_{{ $item->id }}"/>
+                    @if($canDelete)
+                        <x-mfw::modal :route="route('mfw-accounts.clients.destroy', $item->id)"
+                                      title="{{ __('mfw.delete') }}"
+                                      question="{!! __('mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. $accountName }}</b>"
+                                      reference="destroy_client_{{ $item->id }}"/>
+                    @endif
                 </td>
             </tr>
         @endforeach
@@ -125,5 +135,9 @@
     </div>
 
 @endsection
+
+@push('js')
+    <script src="{{ asset('vendor/mfw-accounts/js/account_welcome_from_modal.js') }}"></script>
+@endpush
 
 

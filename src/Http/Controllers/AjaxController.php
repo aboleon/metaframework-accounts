@@ -69,6 +69,24 @@ class AjaxController
         return $response;
     }
 
+    public function sendAccountWelcomeFromModal(): array
+    {
+        $accountId = (int) request('client_id');
+        $response = (new AccountActions)->sendWelcomeByMail();
+        $this->logAjaxActivity(Account::class, $accountId, __FUNCTION__);
+
+        return $response;
+    }
+
+    public function validateAccountWelcomeEmail(Request $request): array
+    {
+        $accountId = (int) request('client_id');
+        $response = (new AccountActions)->validateWelcomeEmail($request);
+        $this->logAjaxActivity(Account::class, $accountId, __FUNCTION__);
+
+        return $response;
+    }
+
     public function findAccountByKeywords(Request $request): array
     {
         $response = new AccountActions()->ajaxMode()->findAccountByKeywords($request);

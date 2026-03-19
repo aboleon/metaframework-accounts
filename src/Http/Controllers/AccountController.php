@@ -17,6 +17,7 @@ use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
 use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Accounts\Support\AccountModel;
+use MetaFramework\Accounts\Support\AccountWelcomePasswordStore;
 use MetaFramework\Services\GooglePlacesTranslator;
 use MetaFramework\Services\Validation\ValidationInstance;
 
@@ -143,6 +144,31 @@ class AccountController
             'data' => $data,
             'client' => $client->load(['address' => fn ($q) => $q->where('billing', 1)]),
             'total' => $total,
+        ]);
+    }
+
+    public function welcomeMailPreview(Account $client): View
+    {
+        $token = trim((string) request('token'));
+        $passwordData = $token !== ''
+            ? (new AccountWelcomePasswordStore)->retrieve($client, $token)
+            : null;
+
+        abort_if(!$passwordData, 404);
+
+        $locale = $client->locale ?: app()->getLocale();
+        app()->setLocale($locale);
+        $loginUrl = trim((string) config('mfw-accounts.frontend.welcome_url', ''));
+        $loginUrl = $loginUrl !== '' ? $loginUrl : (string) config('app.url');
+
+        return view('mfw-accounts::mails.account_welcome')->with([
+            'account' => $client,
+            'client' => $client,
+            'locale' => $locale,
+            'email' => $client->email,
+            'password' => $passwordData['password'],
+            'login_url' => $loginUrl,
+            'app_url' => (string) config('app.url'),
         ]);
     }
 

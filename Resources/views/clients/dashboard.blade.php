@@ -7,9 +7,17 @@
     </h4>
 
     <div>
-        <a class="btn btn-secondary" href="{{ route('mfw-accounts.clients.index') }}">
-            <i class="bi bi-people-fill"></i> {{ __('mfw-accounts::ui.ClientList') }}
-        </a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-secondary" href="{{ route('mfw-accounts.clients.index') }}">
+                <i class="bi bi-people-fill"></i> {{ __('mfw-accounts::ui.ClientList') }}
+            </a>
+            @include('mfw-accounts::clients.send_welcome_mail_action', [
+                'account' => $client,
+                'class' => 'btn btn-violet-light',
+                'text' => '<i class="bi bi-envelope-fill"></i> ' . __('mfw-accounts::mailer/account_welcome.action'),
+                'linktitle' => false,
+            ])
+        </div>
     </div>
 @endsection
 
@@ -138,4 +146,5 @@
 @push('js')
     @include('mfw-accounts::clients.scripts')
     <script src="{{ asset('vendor/mfw-accounts/js/invoice_from_modal.js') }}"></script>
+    <script src="{{ asset('vendor/mfw-accounts/js/account_welcome_from_modal.js') }}"></script>
 @endpush

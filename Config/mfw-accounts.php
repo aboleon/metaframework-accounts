@@ -11,6 +11,10 @@ return [
         'default_civility' => 'A',
     ],
 
+    'frontend' => [
+        'welcome_url' => null,
+    ],
+
     // Host app policy for new invoices.
     'invoice' => [
         'default_currency_id' => 1,

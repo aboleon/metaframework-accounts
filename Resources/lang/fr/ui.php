@@ -88,6 +88,11 @@ return [
         'Mme' => 'Mme',
         'Mlle' => 'Mlle',
     ],
+    'mail_civility' => [
+        'M' => 'Monsieur',
+        'Mme' => 'Madame',
+        'Mlle' => 'Mademoiselle',
+    ],
     'LetterCallType1' => "Veuillez recevoir, en suivant les liens ci-dessous, votre dernière facture d'un montant total de :amount :currency",
     'LetterCallType2' => 'Veuillez recevoir, en suivant les liens ci-dessous, notre devis pour :subject',
     'LetterCallType3' => "Vous pouvez effectuer votre règlement d'un montant de :amount :currency concernant :subject en suivant le lien ci-dessous :",

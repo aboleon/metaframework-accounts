@@ -49,6 +49,7 @@ Route::prefix($routePrefix)->middleware(['web', 'auth'])->name('mfw-accounts.')-
         Route::get('add', [AccountController::class, 'create']);
         Route::get('edit/{client}', [AccountController::class, 'edit']);
         Route::get('dashboard/{client}', [AccountController::class, 'dashboard']);
+        Route::get('{client}/welcome-mail-preview', [AccountController::class, 'welcomeMailPreview'])->name('welcome_mail_preview');
         Route::get('{client}/dashboard', [AccountController::class, 'dashboard'])->name('dashboard');
     });
     Route::resource('clients', AccountController::class)->except(['show']);

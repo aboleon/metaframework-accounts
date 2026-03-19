@@ -88,6 +88,11 @@ return [
         'Mme' => 'Mrs',
         'Mlle' => 'Miss',
     ],
+    'mail_civility' => [
+        'M' => 'Mister',
+        'Mme' => 'Madam',
+        'Mlle' => 'Miss',
+    ],
     'LetterCallType1' => 'Please find, using the links below, your latest invoice for a total amount of :amount :currency',
     'LetterCallType2' => 'Please find, using the links below, our quote for :subject',
     'LetterCallType3' => 'You can make your payment of :amount :currency regarding :subject using the link below:',

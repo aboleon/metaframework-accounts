@@ -7,12 +7,16 @@ namespace MetaFramework\Accounts\Actions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use MetaFramework\Accounts\Mailer\AccountWelcome;
 use MetaFramework\Accessors\Locale;
 use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
 use MetaFramework\Accounts\Http\Requests\UpdateAddressTranslationsRequest;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
 use MetaFramework\Accounts\Support\AccountModel;
+use MetaFramework\Accounts\Support\AccountWelcomePasswordStore;
+use MetaFramework\Accounts\Validators\AccountMailValidator;
+use MetaFramework\Mailer\Http\Controllers\MailController;
 use MetaFramework\Polyglote\Traits\CyrillicContentTrait;
 use MetaFramework\Polyglote\Traits\TransliterationTrait;
 use MetaFramework\Services\GooglePlacesTranslator;
@@ -194,6 +198,57 @@ class AccountActions
         $this->responseSuccess(__('ui.updateSuccess'));
 
         return $this;
+    }
+
+    public function sendWelcomeByMail(): array
+    {
+        $this->enableAjaxMode();
+
+        return (new MailController)
+            ->ajaxMode()
+            ->setValue('token', (string) request('token'))
+            ->distribute(AccountWelcome::class, (string) request('client_id'))
+            ->fetchResponse();
+    }
+
+    public function validateWelcomeEmail(Request $request): array
+    {
+        $this->enableAjaxMode();
+
+        $clientId = (int) request('client_id');
+        $accountClass = AccountModel::className();
+        $account = $accountClass::query()->find($clientId);
+
+        if (!$account) {
+            $this->responseError(__('mfw-accounts::ui.client.not_found'));
+
+            return $this->fetchResponse();
+        }
+
+        $validator = new AccountMailValidator;
+        $result = $validator->validate($account);
+        $issuedPassword = (new AccountWelcomePasswordStore)->issue($account);
+
+        $this->responseElement('data', [
+            'email' => $result['email'],
+            'is_valid' => $result['is_valid'],
+            'is_fake' => $result['is_fake'],
+            'edit_url' => route('mfw-accounts.clients.edit', $account->id),
+            'preview_url' => route('mfw-accounts.clients.welcome_mail_preview', ['client' => $account, 'token' => $issuedPassword['token']]),
+            'token' => $issuedPassword['token'],
+            'labels' => [
+                'email' => __('mfw-auth.email'),
+                'valid_email' => __('mfw-accounts::ui.ClientValidEmail'),
+                'invalid_email' => __('mfw-accounts::ui.ClientInvalidEmail'),
+                'invalid_email_short' => __('mfw-accounts::ui.ClientInvalidEmailShort'),
+                'password' => __('mfw-auth.password.label'),
+                'generated_password' => __('mfw-accounts::mailer/account_welcome.generated_password'),
+                'can_change_password' => __('mfw-accounts::mailer/account_welcome.can_change_password_notice'),
+                'login_url' => __('mfw-accounts::mailer/account_welcome.login_url'),
+            ],
+        ]);
+
+        return $this->fetchResponse();
     }
 
     /**
