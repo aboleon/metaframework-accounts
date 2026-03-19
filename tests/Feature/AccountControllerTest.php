@@ -6,6 +6,7 @@ namespace MetaFramework\Accounts\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Tests\TestCase;
@@ -101,6 +102,49 @@ class AccountControllerTest extends TestCase
 
         $response->assertRedirect(route('mfw-accounts.clients.edit', $client));
         $response->assertSessionHasErrors(['email', 'locale']);
+    }
+
+    public function test_index_uses_configured_account_model_for_offer_counts(): void
+    {
+        $this->actingAs($this->createSystemUser());
+
+        config()->set('mfw-accounts.models.account', \App\Models\Account::class);
+        $client = \App\Models\Account::query()->create([
+            'email' => 'mfw-accounts-offers-' . Str::uuid() . '@example.com',
+            'password' => 'password',
+            'first_name' => 'Offer',
+            'last_name' => 'Client',
+            'phone' => '+35970000003',
+            'locale' => 'fr',
+            'civ' => 'A',
+        ]);
+
+        $offerOneId = DB::table('seller_offers')->insertGetId([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $offerTwoId = DB::table('seller_offers')->insertGetId([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('seller_offer_accounts')->insert([
+            [
+                'offer_id' => $offerOneId,
+                'account_id' => $client->id,
+            ],
+            [
+                'offer_id' => $offerTwoId,
+                'account_id' => $client->id,
+            ],
+        ]);
+
+        $response = $this->get(route('mfw-accounts.clients.index'));
+
+        $response->assertOk();
+        $response->assertViewHas('clients', function ($clients) use ($client): bool {
+            return $clients->getCollection()->firstWhere('id', $client->id)?->offers_count === 2;
+        });
     }
 
     private function createSystemUser(): User

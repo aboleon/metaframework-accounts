@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use MetaFramework\Polyglote\Interfaces\TranslatableInterface;
 use MetaFramework\Polyglote\Traits\Translation;
+use MetaFramework\Accounts\Support\AccountModel;
 
 class AccountBusiness extends Model implements TranslatableInterface
 {
@@ -31,7 +32,7 @@ class AccountBusiness extends Model implements TranslatableInterface
 
     public function account(): BelongsTo
     {
-        return $this->belongsTo(Account::class, 'user_id');
+        return $this->belongsTo(AccountModel::className(), 'user_id');
     }
 }
 

@@ -6,12 +6,15 @@ namespace MetaFramework\Accounts\Validators;
 
 use Illuminate\Support\Str;
 use MetaFramework\Accounts\Models\Account;
+use MetaFramework\Accounts\Support\AccountModel;
 
 class AccountMailValidator
 {
     public function validate(Account|int $account): array
     {
-        $resolved = is_int($account) ? Account::query()->find($account) : $account;
+        $resolved = is_int($account)
+            ? AccountModel::className()::query()->find($account)
+            : $account;
 
         if (!$resolved) {
             return [

@@ -12,6 +12,7 @@ use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
 use MetaFramework\Accounts\Http\Requests\UpdateAddressTranslationsRequest;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
+use MetaFramework\Accounts\Support\AccountModel;
 use MetaFramework\Polyglote\Traits\CyrillicContentTrait;
 use MetaFramework\Polyglote\Traits\TransliterationTrait;
 use MetaFramework\Services\GooglePlacesTranslator;
@@ -44,7 +45,9 @@ class AccountActions
             ->values()
             ->all();
 
-        $accounts = Account::query()
+        $accountClass = AccountModel::className();
+
+        $accounts = $accountClass::query()
             ->select('id', 'first_name', 'last_name', 'email', 'locale')
             ->with('business')
             ->where(function ($query) use ($variants, $locales) {
@@ -53,14 +56,14 @@ class AccountActions
 
                     $query->orWhere(function ($variantQuery) use ($like, $locales) {
                         foreach ($locales as $searchLocale) {
-                            $firstNameExpr = Account::localizedColumn('first_name', $searchLocale);
-                            $lastNameExpr  = Account::localizedColumn('last_name', $searchLocale);
+                            $firstNameExpr = AccountModel::localizedColumn('first_name', $searchLocale);
+                            $lastNameExpr  = AccountModel::localizedColumn('last_name', $searchLocale);
 
                             $variantQuery
                                 ->orWhereRaw($firstNameExpr . ' like ?', [$like])
                                 ->orWhereRaw($lastNameExpr . ' like ?', [$like])
                                 ->orWhereHas('business', function ($businessQuery) use ($like, $searchLocale) {
-                                    $nameExpr = Account::localizedColumn('name', $searchLocale);
+                                    $nameExpr = AccountModel::localizedColumn('name', $searchLocale);
                                     $businessQuery->whereRaw($nameExpr . ' like ?', [$like]);
                                 });
                         }
@@ -93,7 +96,8 @@ class AccountActions
         $accountId = (int) request('object_id');
 
         if ($accountId) {
-            $account = Account::find($accountId);
+            $accountClass = AccountModel::className();
+            $account = $accountClass::query()->find($accountId);
             if (!$account) {
                 $this->responseError(__('mfw-accounts::ui.client.not_found'));
 
@@ -101,7 +105,8 @@ class AccountActions
             }
             $isNew = false;
         } else {
-            $account = new Account;
+            $accountClass = AccountModel::className();
+            $account = new $accountClass;
             $isNew   = true;
         }
 
@@ -155,7 +160,8 @@ class AccountActions
         }
 
         $accountId = (int) ($validated['object_id'] ?? 0);
-        $account   = Account::find($accountId);
+        $accountClass = AccountModel::className();
+        $account = $accountClass::query()->find($accountId);
 
         if (!$account) {
             $this->responseError(__('mfw-accounts::ui.client.not_found'));

@@ -3,6 +3,10 @@
 return [
     'route_prefix' => 'mfw-accounts',
 
+    'models' => [
+        'account' => \MetaFramework\Accounts\Models\Account::class,
+    ],
+
     'client' => [
         'default_civility' => 'A',
     ],

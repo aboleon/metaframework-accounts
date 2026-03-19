@@ -2,30 +2,27 @@
 
 ## Overview
 
-The `Account` model represents a client record. Accounts are stored in the `users` table (shared with Laravel's default user table) and identified by the `mfw_accounts_accounts` table for package-specific data.
+The `Account` model represents a client record. Accounts are stored in the shared `users` table, with related package data split into dedicated account tables such as addresses, business data, and invoices.
 
 ## Model: Account
 
-**Table:** `mfw_accounts_accounts`
+**Table:** `users`
 
 ### Key Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `prenom` | tinyText | First name |
-| `nom` | tinyText | Last name |
-| `prenom_alt` | text | Alternate first name |
-| `nom_alt` | text | Alternate last name |
-| `email` | string(128) | Email address |
-| `phone` | string(128) | Phone number |
-| `societe` | tinyText | Company name |
-| `societe_alt` | tinyText | Alternate company name |
-| `tva` | tinyText | VAT number |
-| `siret` | tinyText | SIRET / registration number |
-| `civ` | enum | Civility: `M`, `Mme`, `Mlle` |
-| `adresse` | tinyText | Address (legacy field) |
-| `localisation` | unsignedInteger | Location reference |
-| `country` | unsignedInteger | Country reference |
+| `id` | unsignedBigInteger | Primary key |
+| `account_id` | unsignedBigInteger nullable | Optional external / legacy account reference |
+| `first_name` | longText | First name (translatable) |
+| `last_name` | longText | Last name (translatable) |
+| `email` | string | Email address |
+| `phone` | string | Phone number |
+| `password` | string | Login password hash / token |
+| `civ` | string | Civility code |
+| `locale` | string(5) | Preferred locale |
+| `created_at` | timestamp | Creation date |
+| `updated_at` | timestamp | Last update date |
 
 ### Relations
 
@@ -52,6 +49,45 @@ The `Account` model represents a client record. Accounts are stored in the `user
 | `scopeCompany` | `?string $company` | Filter by company name |
 | `scopeDateRange` | `$operator, $date, $date2` | Filter by creation date |
 | `scopeFilters` | `array $filters` | Combined filter scope used by the index controller |
+
+### Host App Extension
+
+The package resolves the account model through `config('mfw-accounts.models.account')`. A host application can point that config value to its own model class extending `MetaFramework\Accounts\Models\Account`.
+
+That extended model is the correct place for project-specific relations and client-index customization.
+
+Available hooks on the resolved model:
+
+| Method | Purpose |
+|--------|---------|
+| `applyClientIndexQuery(Builder $query, array $filters = []): Builder` | Modify the package clients index query before pagination |
+| `clientIndexViewData(LengthAwarePaginator $clients, array $filters = [], ?Request $request = null): array` | Provide extra view data to the clients index view |
+
+Example host-app model:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use MetaFramework\Accounts\Models\Account as PackageAccount;
+use Modules\Seller\Models\Offer;
+
+class Account extends PackageAccount
+{
+    public static function applyClientIndexQuery(Builder $query, array $filters = []): Builder
+    {
+        return $query->withCount('offers');
+    }
+
+    public function offers(): BelongsToMany
+    {
+        return $this->belongsToMany(Offer::class, 'seller_offer_accounts', 'account_id', 'offer_id');
+    }
+}
+```
 
 ## Model: AccountAddress
 

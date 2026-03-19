@@ -16,6 +16,7 @@ use MetaFramework\Accounts\Http\Requests\SaveAccountClientRequest;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
 use MetaFramework\Accounts\Models\Invoice;
+use MetaFramework\Accounts\Support\AccountModel;
 use MetaFramework\Services\GooglePlacesTranslator;
 use MetaFramework\Services\Validation\ValidationInstance;
 
@@ -34,7 +35,8 @@ class AccountController
             'sort_order',
         ]);
 
-        $clients = Account::query()
+        $accountClass = AccountModel::className();
+        $clientsQuery = $accountClass::query()
             ->select(
                 'users.id',
                 'users.account_id',
@@ -50,35 +52,43 @@ class AccountController
                 'invoices' => fn ($query) => $query->whereIn('doc_type', [1, 5]),
             ])
             ->filters($filters);
+        $clientsQuery = $accountClass::applyClientIndexQuery($clientsQuery, $filters);
 
         $sortBy = $filters['sort_by'] ?? 'date_created';
         $sortOrder = strtolower((string) ($filters['sort_order'] ?? 'desc'));
         $sortOrder = in_array($sortOrder, ['asc', 'desc'], true) ? $sortOrder : 'desc';
 
-        match ($sortBy) {
-            'name' => $this->applyNameSort($clients, $sortOrder),
-            'invoice_count' => $clients->orderBy('invoices_count', $sortOrder),
-            default => $clients->orderBy('created_at', $sortOrder),
-        };
+        if ($sortBy === 'name') {
+            $this->applyNameSort($clientsQuery, $sortOrder);
+        } elseif ($sortBy === 'invoice_count') {
+            $clientsQuery->orderBy('invoices_count', $sortOrder);
+        } else {
+            $clientsQuery->orderBy('created_at', $sortOrder);
+        }
+
+        $clients = $clientsQuery->paginate(15)->appends($filters);
+        $customViewData = $accountClass::clientIndexViewData($clients, $filters, $request);
 
         return view('mfw-accounts::clients.index')->with([
-            'clients' => $clients->paginate(15)->appends($filters),
-            'total' => $clients->count(),
+            'clients' => $clients,
+            'total' => $clientsQuery->count(),
             'u' => $request->url(),
+            ...$customViewData,
         ]);
     }
 
     public function create(): View
     {
         return view('mfw-accounts::clients.edit')->with([
-            'data' => new Account,
+            'data' => new (AccountModel::className()),
             'address' => new AccountAddress,
         ]);
     }
 
     public function store(SaveAccountClientRequest $request): RedirectResponse
     {
-        $client = new Account;
+        $accountClass = AccountModel::className();
+        $client = new $accountClass;
         $this->persistClient($client, $this->validatedClientData($request));
         $this->persistAddress($client, $request);
 
@@ -139,11 +149,12 @@ class AccountController
     public function search(Request $request): JsonResponse
     {
         $name = (string) $request->get('client_name', '');
+        $accountClass = AccountModel::className();
 
-        $clients = Account::query()
+        $clients = $accountClass::query()
             ->when($name !== '', function ($query) use ($name) {
-                $firstNameExpr = Account::localizedColumn('first_name', app()->getLocale());
-                $lastNameExpr = Account::localizedColumn('last_name', app()->getLocale());
+                $firstNameExpr = AccountModel::localizedColumn('first_name', app()->getLocale());
+                $lastNameExpr = AccountModel::localizedColumn('last_name', app()->getLocale());
 
                 $query
                     ->whereRaw($firstNameExpr . ' like ?', [$name . '%'])
@@ -332,9 +343,9 @@ class AccountController
     private function applyNameSort(Builder $clients, string $sortOrder): void
     {
         $orderLocale = config('mfw.translatable.account_login') ?: config('app.fallback_locale');
-        $businessNameExpr = Account::localizedColumn('b.name', $orderLocale);
-        $lastNameExpr = Account::localizedColumn('users.last_name', $orderLocale);
-        $firstNameExpr = Account::localizedColumn('users.first_name', $orderLocale);
+        $businessNameExpr = AccountModel::localizedColumn('b.name', $orderLocale);
+        $lastNameExpr = AccountModel::localizedColumn('users.last_name', $orderLocale);
+        $firstNameExpr = AccountModel::localizedColumn('users.first_name', $orderLocale);
 
         $clients->leftJoin('mfw_accounts_account_business as b', 'b.user_id', '=', 'users.id');
         $clients

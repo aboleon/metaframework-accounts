@@ -17,6 +17,7 @@ use MetaFramework\Casts\Datepicker;
 use MetaFramework\Casts\NullablePriceInteger;
 use MetaFramework\Casts\PriceInteger;
 use MetaFramework\Accounts\Support\DateFormat;
+use MetaFramework\Accounts\Support\AccountModel;
 use MetaFramework\Traits\Locale;
 
 /**
@@ -316,7 +317,8 @@ class Invoice extends Model
         }
 
         $excludedCountryCodes = ['BG']; // adjust as needed if more exclusions are required
-        $excludedClients      = Account::whereHas('address', function ($query) use ($excludedCountryCodes) {
+        $accountClass = AccountModel::className();
+        $excludedClients      = $accountClass::query()->whereHas('address', function ($query) use ($excludedCountryCodes) {
             $query->whereIn('country_code', $excludedCountryCodes);
         })->pluck('id');
 
@@ -342,7 +344,7 @@ class Invoice extends Model
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Account::class, 'account_id')->with(['address', 'business']);
+        return $this->belongsTo(AccountModel::className(), 'account_id')->with(['address', 'business']);
     }
 
     public function createdBy(): BelongsTo

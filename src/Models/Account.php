@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MetaFramework\Accounts\Models;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -144,6 +146,19 @@ class Account extends AccountUser implements TranslatableInterface
                 'class' => 'col-md-6',
             ],
         ];
+    }
+
+    public static function applyClientIndexQuery(Builder $query, array $filters = []): Builder
+    {
+        return $query;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function clientIndexViewData(LengthAwarePaginator $clients, array $filters = [], ?Request $request = null): array
+    {
+        return [];
     }
 }
 

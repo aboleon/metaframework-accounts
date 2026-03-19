@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use MetaFramework\Inputable\Contracts\GooglePlacesInterface;
 use MetaFramework\Polyglote\Interfaces\TranslatableInterface;
 use MetaFramework\Polyglote\Traits\Translation;
+use MetaFramework\Accounts\Support\AccountModel;
 
 /**
  * @property string $country_code;
@@ -84,6 +85,6 @@ class AccountAddress extends Model implements TranslatableInterface
 
     public function account(): BelongsTo
     {
-        return $this->belongsTo(Account::class, 'user_id');
+        return $this->belongsTo(AccountModel::className(), 'user_id');
     }
 }

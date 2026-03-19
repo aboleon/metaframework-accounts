@@ -68,6 +68,21 @@ abstract class TestCase extends OrchestraTestCase
             });
         }
 
+        if (!Schema::hasTable('seller_offers')) {
+            Schema::create('seller_offers', function (Blueprint $table) {
+                $table->id();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('seller_offer_accounts')) {
+            Schema::create('seller_offer_accounts', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('offer_id')->constrained('seller_offers')->cascadeOnDelete();
+                $table->foreignId('account_id')->constrained('users')->cascadeOnDelete();
+            });
+        }
+
         $this->artisan('migrate', ['--database' => 'testing', '--force' => true])->run();
     }
 }

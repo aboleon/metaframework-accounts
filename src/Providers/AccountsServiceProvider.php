@@ -8,11 +8,13 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Translation\Translator;
 use MetaFramework\Accounts\Console\InstallFrontAccount;
 use MetaFramework\Accounts\Models\Currency;
+use MetaFramework\Accounts\Support\AccountModel;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Throwable;
@@ -27,6 +29,12 @@ class AccountsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Route::bind('client', function (mixed $value) {
+            $accountClass = AccountModel::className();
+
+            return $accountClass::query()->findOrFail($value);
+        });
+
         $this->loadRoutesFrom(__DIR__ . '/../../Routes/web.php');
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
