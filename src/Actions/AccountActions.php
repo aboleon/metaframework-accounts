@@ -36,6 +36,7 @@ class AccountActions
     {
         $term = trim((string) $request->input('data'));
         $accountTypes = $this->resolveAccountTypes($request->input('account_type'));
+        $isCompanySearch = $this->isCompanyOnlySearch($accountTypes);
 
         if ($term === '' || strlen($term) < 2) {
             $this->responseElement('accounts', []);
@@ -80,15 +81,22 @@ class AccountActions
             })
             ->orderBy('last_name')
             ->get()
-            ->map(function (Account $account) {
+            ->map(function (Account $account) use ($isCompanySearch) {
                 $accountLocale = $this->resolveAccountLocale($account->locale);
+                $businessName = $account->business?->translation('name', $accountLocale);
+                $firstName = $account->translation('first_name', $accountLocale);
+                $lastName = $account->translation('last_name', $accountLocale);
+                $displayName = $isCompanySearch
+                    ? $businessName
+                    : trim(collect([$firstName, $lastName])->filter()->implode(' '));
 
                 return [
-                    'id'         => $account->id,
-                    'first_name' => $account->translation('first_name', $accountLocale),
-                    'last_name'  => $account->translation('last_name', $accountLocale),
-                    'email'      => $account->email,
-                    'business'   => $account->business?->translation('name', $accountLocale),
+                    'id'           => $account->id,
+                    'first_name'   => $isCompanySearch ? null : $firstName,
+                    'last_name'    => $isCompanySearch ? null : $lastName,
+                    'email'        => $account->email,
+                    'business'     => $businessName,
+                    'display_name' => $displayName ?: $businessName ?: trim(collect([$firstName, $lastName])->filter()->implode(' ')),
                 ];
             })
             ->values()
@@ -674,6 +682,14 @@ class AccountActions
             ->all();
 
         return $normalizedTypes;
+    }
+
+    /**
+     * @param  array<int, string>  $accountTypes
+     */
+    private function isCompanyOnlySearch(array $accountTypes): bool
+    {
+        return $accountTypes === [UserType::COMPANY->value];
     }
 
     private function transliterate(string $direction, string $value): string

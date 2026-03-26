@@ -35,6 +35,29 @@ class AccountSearchTest extends TestCase
         $this->assertNotContains($agent->id, collect($response->json('accounts'))->pluck('id')->all());
     }
 
+    public function test_company_search_returns_company_display_name_instead_of_user_names(): void
+    {
+        $this->actingAs($this->createSystemUser());
+
+        $company = $this->createSearchableAccount(UserType::COMPANY, 'Jane', 'Smith');
+        $company->business()->create([
+            'name' => 'Acme Travel',
+        ]);
+
+        $response = $this->postJson(route('mfw-accounts.ajax'), [
+            'action' => 'findAccountByKeywords',
+            'data' => 'Acme',
+            'account_type' => UserType::COMPANY->value,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('accounts.0.id', $company->id);
+        $response->assertJsonPath('accounts.0.display_name', 'Acme Travel');
+        $response->assertJsonPath('accounts.0.first_name', null);
+        $response->assertJsonPath('accounts.0.last_name', null);
+        $response->assertJsonPath('accounts.0.business', 'Acme Travel');
+    }
+
     private function createSystemUser(): User
     {
         return User::query()->create([

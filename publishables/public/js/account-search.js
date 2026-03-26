@@ -164,22 +164,24 @@ class AccountSearch {
         let list = '<div class="suggestions"><ul>';
         accounts.forEach((account) => {
             const decodeHtml = (value) => $('<textarea>').html(value ?? '').text();
+            const displayText = decodeHtml(account.display_name).trim();
             const name = [account.first_name, account.last_name].filter(Boolean).join(' ');
             const nameText = decodeHtml(name).trim();
             const businessText = account.business ? decodeHtml(account.business).trim() : '';
-            const safeName = $('<div>').text(nameText).html();
+            const primaryText = displayText || nameText || businessText;
+            const safeName = $('<div>').text(primaryText).html();
             const safeBusiness = $('<div>').text(businessText).html();
-            const badge = businessText ? ` <span class="badge bg-success ms-2">${safeBusiness}</span>` : '';
+            const badge = businessText && businessText !== primaryText ? ` <span class="badge bg-success ms-2">${safeBusiness}</span>` : '';
             const label = `${safeName}${badge}`.trim();
 
-            let inputLabel = nameText;
+            let inputLabel = displayText || nameText;
             if (!inputLabel && businessText) {
                 inputLabel = businessText;
             } else if (businessText) {
-                const nameLower = nameText.toLowerCase();
+                const nameLower = inputLabel.toLowerCase();
                 const businessLower = businessText.toLowerCase();
                 if (businessLower && !nameLower.includes(businessLower)) {
-                    inputLabel = `${nameText} ${businessText}`.trim();
+                    inputLabel = `${inputLabel} ${businessText}`.trim();
                 }
             }
 
