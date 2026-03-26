@@ -107,6 +107,51 @@ class AjaxController
         return $response;
     }
 
+    public function update_client_info(): array
+    {
+        $response = new AccountActions()
+            ->ajaxMode()
+            ->updateClientInfoData()
+            ->fetchResponse();
+        $accountId = (int) ($response['client_id'] ?? request('object_id') ?? 0);
+        $this->logAjaxActivity(Account::class, $accountId, __FUNCTION__);
+
+        return $response;
+    }
+
+    public function update_client_address(): array
+    {
+        $response = new AccountActions()
+            ->ajaxMode()
+            ->updateClientAddressData()
+            ->fetchResponse();
+        $this->logAjaxActivity(Account::class, (int) ($response['client_id'] ?? request('object_id') ?? 0), __FUNCTION__);
+
+        return $response;
+    }
+
+    public function update_client_company(): array
+    {
+        $response = new AccountActions()
+            ->ajaxMode()
+            ->updateClientCompanyData()
+            ->fetchResponse();
+        $this->logAjaxActivity(Account::class, (int) ($response['client_id'] ?? request('object_id') ?? 0), __FUNCTION__);
+
+        return $response;
+    }
+
+    public function handle_client_agent(): array
+    {
+        $response = new AccountActions()
+            ->ajaxMode()
+            ->handleClientAgentAction()
+            ->fetchResponse();
+        $this->logAjaxActivity(Account::class, (int) (request('client_id') ?? 0), __FUNCTION__);
+
+        return $response;
+    }
+
     public function update_address_translations(): array
     {
         $response = new AccountActions()

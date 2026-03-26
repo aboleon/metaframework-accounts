@@ -1,9 +1,22 @@
 $(function () {
     const $clientForm = $('#account-client-form');
-    const $manualFixToggle = $('#manual-fix-address');
-    const $companyToggle = $('#is-company');
+    const $manualFixToggle = $('[name="manual_fix_address"]').first();
+    const $companyToggle = $('[name="is_company"]').first();
     const $companyFields = $('#account-company-fields');
+    const $companyInfoTab = $('#account-tab-company-info');
+    const $companyAgentsTab = $('#account-tab-company-agents');
+    const $companyInfoPane = $('#account-pane-company-info');
+    const $companyAgentsPane = $('#account-pane-company-agents');
+    const $infoTab = $('#account-tab-info');
+    const $localeField = $('[name="locale"]').first();
+    const $sellerToggle = $('[name="business[is_seller]"]').first();
+    const $sellerSlugWrap = $('#account-seller-slug-wrap');
+    const $sellerSlugField = $('[name="business[seller_slug]"]').first();
     const $agentsSection = $('#account-agents-section');
+    const trimValue = function (value) {
+        return String(value ?? '').trim();
+    };
+    let sellerSlugTouched = !!($sellerSlugField.length && trimValue($sellerSlugField.val()) !== '');
 
     if ($manualFixToggle.length && $clientForm.length) {
         $manualFixToggle.off('change.account-client').on('change.account-client', function () {
@@ -33,46 +46,158 @@ $(function () {
         });
     }
 
+    const slugifySellerValue = function (value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/-{2,}/g, '-');
+    };
+
+    const companyNameValue = function () {
+        const selectedLocale = trimValue($localeField.val());
+
+        if (selectedLocale !== '') {
+            const $localizedField = $clientForm.find('[name="business[name][' + selectedLocale + ']"]').first();
+            if ($localizedField.length) {
+                return trimValue($localizedField.val());
+            }
+        }
+
+        const $singleField = $clientForm.find('[name="business[name]"]').first();
+        if ($singleField.length) {
+            return trimValue($singleField.val());
+        }
+
+        return '';
+    };
+
+    const syncSellerSlug = function (force) {
+        if (!$sellerSlugField.length) {
+            return;
+        }
+
+        if (!force && sellerSlugTouched && trimValue($sellerSlugField.val()) !== '') {
+            return;
+        }
+
+        $sellerSlugField.val(slugifySellerValue(companyNameValue()));
+    };
+
+    const syncSellerState = function () {
+        if (!$sellerToggle.length || !$sellerSlugWrap.length) {
+            return;
+        }
+
+        const isCompany = !$companyToggle.length || $companyToggle.is(':checked');
+        const isSeller = isCompany && $sellerToggle.is(':checked');
+
+        $sellerToggle.prop('disabled', !isCompany);
+        $sellerSlugWrap.toggleClass('d-none', !isSeller);
+        $sellerSlugWrap.toggle(isSeller);
+        $sellerSlugField.prop('disabled', !isSeller);
+
+        if (isSeller) {
+            syncSellerSlug(false);
+        }
+    };
+
+    const showTab = function ($tab) {
+        if (!$tab.length || $tab.hasClass('d-none')) {
+            return;
+        }
+
+        if (window.bootstrap && window.bootstrap.Tab) {
+            bootstrap.Tab.getOrCreateInstance($tab[0]).show();
+
+            return;
+        }
+
+        if (typeof $tab.tab === 'function') {
+            $tab.tab('show');
+            return;
+        }
+
+        const targetSelector = $tab.attr('data-bs-target') || $tab.attr('href');
+        if (!targetSelector) {
+            return;
+        }
+
+        $('.nav-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
+        $('.tab-content .tab-pane').removeClass('show active');
+        $tab.addClass('active').attr('aria-selected', 'true');
+        $(targetSelector).addClass('show active');
+    };
+
+    if ($sellerSlugField.length) {
+        $sellerSlugField.off('input.account-seller-slug').on('input.account-seller-slug', function () {
+            sellerSlugTouched = true;
+        });
+    }
+
+    if ($sellerToggle.length) {
+        $sellerToggle.off('change.account-seller').on('change.account-seller', function () {
+            if ($(this).is(':checked') && $sellerSlugField.length && trimValue($sellerSlugField.val()) === '') {
+                sellerSlugTouched = false;
+                syncSellerSlug(true);
+            }
+
+            syncSellerState();
+        });
+    }
+
+    if ($clientForm.length) {
+        $clientForm.find('[name="business[name]"], [name^="business[name]["]')
+            .off('input.account-seller-name')
+            .on('input.account-seller-name', function () {
+                syncSellerSlug(false);
+            });
+    }
+
+    if ($localeField.length) {
+        $localeField.off('change.account-seller-locale').on('change.account-seller-locale', function () {
+            syncSellerSlug(false);
+        });
+    }
+
     if ($companyToggle.length && $companyFields.length) {
         const toggleCompanyState = function () {
             const checked = $companyToggle.is(':checked');
+            const companyInfoVisible = checked;
+            const companyAgentsVisible = checked && $companyAgentsTab.length && $companyAgentsPane.length;
+
+            $companyInfoTab.toggleClass('d-none', !companyInfoVisible);
+            $companyInfoPane.toggleClass('d-none', !companyInfoVisible);
+            $companyFields.toggleClass('d-none', !checked);
             $companyFields.toggle(checked);
+
+            $companyAgentsTab.toggleClass('d-none', !companyAgentsVisible);
+            $companyAgentsPane.toggleClass('d-none', !companyAgentsVisible);
+            $agentsSection.toggleClass('d-none', !checked);
             $agentsSection.toggle(checked);
             $companyFields.find('input, select, textarea').prop('disabled', !checked);
+
+            const companyTabWasActive = ($companyInfoPane.length && $companyInfoPane.hasClass('active')) ||
+                ($companyAgentsPane.length && $companyAgentsPane.hasClass('active'));
+
+            if (!checked && companyTabWasActive) {
+                showTab($infoTab);
+            }
+
+            if (checked && $companyInfoTab.length && !$companyInfoTab.hasClass('active') && !$companyAgentsTab.hasClass('active')) {
+                showTab($companyInfoTab);
+            }
+
+            syncSellerState();
         };
 
         toggleCompanyState();
         $companyToggle.off('change.account-company').on('change.account-company', toggleCompanyState);
     }
 
-    $('[data-section-toggle]').each(function () {
-        const $button = $(this);
-        const targetSelector = $button.attr('data-section-toggle');
-        const $icon = $button.find('[data-collapse-icon]');
-
-        if (!targetSelector || !$icon.length) {
-            return;
-        }
-
-        const $targets = $(targetSelector + (targetSelector === '#account-address-collapse' ? ', #account-address-corrections-collapse' : ''));
-        if (!$targets.length) {
-            return;
-        }
-
-        const syncIcon = function (expanded) {
-            $icon.toggleClass('bi-chevron-down', expanded);
-            $icon.toggleClass('bi-chevron-up', !expanded);
-            $button.attr('aria-expanded', expanded ? 'true' : 'false');
-        };
-
-        syncIcon($targets.first().is(':visible'));
-
-        $button.off('click.section-toggle').on('click.section-toggle', function () {
-            const expanded = $targets.first().is(':visible');
-            syncIcon(!expanded);
-            $targets.stop(true, true).slideToggle(220);
-        });
-    });
+    syncSellerState();
 
     if ($agentsSection.is('form')) {
         $agentsSection.off('submit.agent-section').on('submit.agent-section', function (event) {
@@ -84,7 +209,22 @@ $(function () {
 });
 
 function submitAgentAction($form, payload) {
-    mfwAjax($.param(payload), $form, {
+    const requestData = {};
+
+    $form.find('input[name="_token"], input[name="action"], input[name="client_id"]').each(function () {
+        const name = $(this).attr('name');
+        if (!name) {
+            return;
+        }
+
+        requestData[name] = $(this).val() ?? '';
+    });
+
+    $.each(payload, function (key, value) {
+        requestData[key] = value;
+    });
+
+    mfwAjax($.param(requestData), $form, {
         keepMessages: false,
         printerOptions: {
             isDismissable: true,

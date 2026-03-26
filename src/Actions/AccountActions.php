@@ -6,6 +6,7 @@ namespace MetaFramework\Accounts\Actions;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use MetaFramework\Accounts\Enum\UserType;
 use MetaFramework\Accounts\Mailer\AccountWelcome;
@@ -14,8 +15,10 @@ use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
 use MetaFramework\Accounts\Http\Requests\UpdateAddressTranslationsRequest;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
+use MetaFramework\Accounts\Models\AccountAgent;
 use MetaFramework\Accounts\Support\AccountModel;
 use MetaFramework\Accounts\Support\AccountWelcomePasswordStore;
+use MetaFramework\Accounts\Services\SellerConfigSkeletonWriter;
 use MetaFramework\Accounts\Validators\AccountMailValidator;
 use MetaFramework\Mailer\Http\Controllers\MailController;
 use MetaFramework\Polyglote\Traits\CyrillicContentTrait;
@@ -160,6 +163,203 @@ class AccountActions
         }
 
         $this->responseElement('client_id', $account->id);
+
+        return $this;
+    }
+
+    public function updateClientInfoData(): self
+    {
+        [$account, $isNew] = $this->resolveAccountForUpdate();
+        if (!$account) {
+            return $this;
+        }
+
+        try {
+            $validated = Validator::make(request()->all(), [
+                'first_name' => ['nullable'],
+                'last_name' => ['nullable'],
+                'email' => ['nullable', 'email', 'max:255'],
+                'phone' => ['nullable', 'string', 'max:128'],
+                'civ' => ['nullable', 'string', 'max:10'],
+                'locale' => ['nullable', 'string', 'max:5'],
+                'is_company' => ['nullable', 'boolean'],
+            ])->validate();
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->responseError((string) $message);
+                }
+            }
+
+            return $this;
+        }
+
+        if (!request()->boolean('is_company') && $account->agents()->exists()) {
+            $this->responseError(__('mfw-accounts::ui.company_requires_agents_cleanup'));
+
+            return $this;
+        }
+
+        $this->persistClient($account, $validated);
+        $this->persistCompanyState($account, request()->boolean('is_company'));
+        $this->responseSuccess(__('mfw-accounts::ui.client.is_saved'));
+
+        if ($isNew) {
+            $this->responseElement('callback', 'redirectClientEdit');
+            $this->responseElement('redirect_delay', self::REDIRECT_DELAY_SECONDS);
+            $this->responseNotice(__('mfw-accounts::ui.client.redirect_notice', ['seconds' => self::REDIRECT_DELAY_SECONDS]));
+        }
+
+        $this->responseElement('client_id', $account->id);
+
+        return $this;
+    }
+
+    public function updateClientAddressData(): self
+    {
+        [$account] = $this->resolveAccountForUpdate(requireExisting: true);
+        if (!$account) {
+            return $this;
+        }
+
+        try {
+            $validated = Validator::make(request()->all(), [
+                'mfw_google_places' => ['required', 'array'],
+                'mfw_google_places.complementary' => ['nullable', 'string'],
+                'manual_fix_address' => ['nullable', 'boolean'],
+            ])->validate();
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->responseError((string) $message);
+                }
+            }
+
+            return $this;
+        }
+
+        $this->persistAddress($account, (array) ($validated['mfw_google_places'] ?? []));
+        $this->responseSuccess(__('mfw-accounts::ui.client.is_saved'));
+        $this->responseElement('client_id', $account->id);
+
+        return $this;
+    }
+
+    public function updateClientCompanyData(): self
+    {
+        [$account] = $this->resolveAccountForUpdate(requireExisting: true);
+        if (!$account) {
+            return $this;
+        }
+
+        $attributes = app(UpdateAccountClientAjaxRequest::class)->attributes();
+
+        try {
+            $validated = Validator::make(request()->all(), [
+                'business' => ['required', 'array'],
+                'business.name' => ['nullable'],
+                'business.name.*' => ['nullable', 'string', 'max:255'],
+                'business.vat_number' => ['nullable', 'string', 'max:255'],
+                'business.reg_number' => ['nullable', 'string', 'max:255'],
+                'business.is_seller' => ['nullable', 'boolean'],
+                'business.seller_slug' => [
+                    request()->boolean('business.is_seller') ? 'required' : 'nullable',
+                    'string',
+                    'max:255',
+                    'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                    \Illuminate\Validation\Rule::unique('mfw_accounts_account_business', 'seller_slug')->ignore((int) $account->id, 'user_id'),
+                ],
+            ], [], $attributes)->validate();
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->responseError((string) $message);
+                }
+            }
+
+            return $this;
+        }
+
+        $this->persistBusinessDetails($account, $validated['business'] ?? []);
+        $this->responseSuccess(__('mfw-accounts::ui.client.is_saved'));
+        $this->responseElement('client_id', $account->id);
+
+        return $this;
+    }
+
+    public function handleClientAgentAction(): self
+    {
+        $client = Account::query()->find((int) request('client_id'));
+        if (!$client || $client->isAgent() || !$client->isCompany()) {
+            $this->responseError(__('mfw-accounts::ui.client.not_found'));
+
+            return $this;
+        }
+
+        $agentAction = request()->string('agent_action')->toString();
+
+        if ($agentAction === 'delete') {
+            $agent = AccountAgent::query()->find((int) request('agent_id'));
+            if (!$agent || (int) $agent->company_id !== (int) $client->id) {
+                $this->responseError(__('ui.error'));
+
+                return $this;
+            }
+
+            $agentId = $agent->id;
+            $agent->delete();
+
+            $this->responseSuccess(__('mfw-accounts::ui.agent.deleted'));
+            $this->responseElement('callback', 'handleClientAgentActionResult');
+            $this->responseElement('agent_action', 'delete');
+            $this->responseElement('agent_id', $agentId);
+            $this->responseElement('no_agents_text', __('mfw-accounts::ui.no_agents'));
+
+            return $this;
+        }
+
+        $rules = app(\MetaFramework\Accounts\Http\Requests\SaveAccountAgentRequest::class)->rules();
+        $attributes = app(\MetaFramework\Accounts\Http\Requests\SaveAccountAgentRequest::class)->attributes();
+
+        try {
+            $validated = Validator::make(request()->all(), $rules, [], $attributes)->validate();
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $messages) {
+                foreach ($messages as $message) {
+                    $this->responseError((string) $message);
+                }
+            }
+
+            return $this;
+        }
+
+        $agent = $agentAction === 'update'
+            ? AccountAgent::query()->find((int) request('agent_id'))
+            : new AccountAgent;
+
+        if ($agentAction === 'update' && (!$agent || (int) $agent->company_id !== (int) $client->id)) {
+            $this->responseError(__('ui.error'));
+
+            return $this;
+        }
+
+        if (!in_array($agentAction, ['create', 'update'], true)) {
+            $this->responseError(__('ui.error'));
+
+            return $this;
+        }
+
+        $agent = app(\MetaFramework\Accounts\Actions\AccountAgentActions::class)->persist($client, $agent, $validated);
+
+        $this->responseSuccess(__('mfw-accounts::ui.agent.saved'));
+        $this->responseElement('callback', 'handleClientAgentActionResult');
+        $this->responseElement('agent_action', $agentAction);
+        $this->responseElement('agent_id', $agent->id);
+        $this->responseElement('no_agents_text', __('mfw-accounts::ui.no_agents'));
+        $this->responseElement('agent_html', view('mfw-accounts::clients.partials.agent_card', [
+            'agent' => $agent,
+            'data' => $client,
+        ])->render());
 
         return $this;
     }
@@ -309,6 +509,18 @@ class AccountActions
         $isCompany = request()->boolean('is_company');
 
         if (!$isCompany) {
+            $this->persistCompanyState($account, false);
+
+            return;
+        }
+
+        $this->persistCompanyState($account, true);
+        $this->persistBusinessDetails($account, $data['business'] ?? [], $isNew);
+    }
+
+    private function persistCompanyState(Account $account, bool $isCompany): void
+    {
+        if (!$isCompany) {
             if ($account->business) {
                 $account->business()->delete();
             }
@@ -318,14 +530,37 @@ class AccountActions
             return;
         }
 
-        $business  = $data['business'] ?? [];
+        $account->assignUserType(UserType::COMPANY->value)->save();
+
+        if (!$account->business) {
+            $account->business()->create([
+                'name' => null,
+                'vat_number' => null,
+                'reg_number' => null,
+                'is_seller' => false,
+                'seller_slug' => null,
+            ]);
+        }
+    }
+
+    private function persistBusinessDetails(Account $account, array $business, bool $isNew = false): void
+    {
+        $this->persistCompanyState($account, true);
+        $previousSlug = trim((string) ($account->business->seller_slug ?? ''));
+
         $nameValue = $business['name'] ?? null;
-        $payload   = [
-            'name'       => $isNew
+        $isSeller = (bool) ($business['is_seller'] ?? false);
+        $sellerSlug = $isSeller
+            ? Str::slug((string) ($business['seller_slug'] ?? $this->singleLocaleValue($nameValue) ?? ''))
+            : null;
+        $payload = [
+            'name' => $isNew
                 ? $this->translateNameService($nameValue, 'name')
                 : $this->normalizeNameTranslations($nameValue),
             'vat_number' => $business['vat_number'] ?? null,
             'reg_number' => $business['reg_number'] ?? null,
+            'is_seller' => $isSeller,
+            'seller_slug' => $sellerSlug !== '' ? $sellerSlug : null,
         ];
 
         if ($account->business) {
@@ -334,7 +569,48 @@ class AccountActions
             $account->business()->create($payload);
         }
 
-        $account->assignUserType(UserType::COMPANY->value)->save();
+        $account->refresh()->load('business');
+
+        $result = app(SellerConfigSkeletonWriter::class)->ensure($account->business, $previousSlug);
+        if ($result['created'] ?? false) {
+            $this->responseNotice(__('mfw-accounts::ui.seller_config_notice', [
+                'path' => $result['relative_path'],
+            ]));
+        } elseif ($result['renamed'] ?? false) {
+            $this->responseNotice(__('mfw-accounts::ui.seller_config_renamed_notice', [
+                'path' => $result['relative_path'],
+            ]));
+        }
+    }
+
+    /**
+     * @return array{0: ?Account, 1: bool}
+     */
+    private function resolveAccountForUpdate(bool $requireExisting = false): array
+    {
+        $accountId = (int) request('object_id');
+
+        if ($accountId > 0) {
+            $accountClass = AccountModel::className();
+            $account = $accountClass::query()->find($accountId);
+            if (!$account) {
+                $this->responseError(__('mfw-accounts::ui.client.not_found'));
+
+                return [null, false];
+            }
+
+            return [$account, false];
+        }
+
+        if ($requireExisting) {
+            $this->responseError(__('mfw-accounts::ui.client.not_found'));
+
+            return [null, false];
+        }
+
+        $accountClass = AccountModel::className();
+
+        return [new $accountClass, true];
     }
 
     private function translateNameService(mixed $value, string $fieldName): array|string|null

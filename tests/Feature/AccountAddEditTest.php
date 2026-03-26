@@ -7,6 +7,7 @@ namespace MetaFramework\Accounts\Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
+use MetaFramework\Accounts\Enum\UserType;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Tests\TestCase;
 
@@ -39,6 +40,37 @@ class AccountAddEditTest extends TestCase
             '/name="object_id"\s+value="' . preg_quote((string) $account->id, '/') . '"/',
             (string) $response->getContent(),
         );
+    }
+
+    public function test_clients_edit_page_renders_tabbed_layout_for_regular_account(): void
+    {
+        $this->actingAs($this->createSystemUser());
+        $account = $this->createAccount();
+
+        $response = $this->get($this->accountsPath('clients/edit/' . $account->id));
+
+        $response->assertOk();
+        $content = (string) $response->getContent();
+
+        $this->assertMatchesRegularExpression('/id="account-tab-info"/', $content);
+        $this->assertMatchesRegularExpression('/id="account-tab-address"/', $content);
+        $this->assertMatchesRegularExpression('/class="nav-link d-none"[^>]*id="account-tab-company-info"/', $content);
+        $this->assertMatchesRegularExpression('/class="nav-link d-none"[^>]*id="account-tab-company-agents"/', $content);
+    }
+
+    public function test_clients_edit_page_renders_company_tabs_for_company_account(): void
+    {
+        $this->actingAs($this->createSystemUser());
+        $account = $this->createCompanyAccount();
+
+        $response = $this->get($this->accountsPath('clients/edit/' . $account->id));
+
+        $response->assertOk();
+        $content = (string) $response->getContent();
+
+        $this->assertMatchesRegularExpression('/class="nav-link"[^>]*id="account-tab-company-info"/', $content);
+        $this->assertMatchesRegularExpression('/class="nav-link"[^>]*id="account-tab-company-agents"/', $content);
+        $response->assertSee(__('mfw-accounts::ui.Agents'));
     }
 
     public function test_update_client_action_creates_account_from_ajax_add_flow(): void
@@ -136,6 +168,28 @@ class AccountAddEditTest extends TestCase
             'locale' => 'fr',
             'civ' => 'A',
         ]);
+    }
+
+    private function createCompanyAccount(): Account
+    {
+        $account = Account::query()->create([
+            'type' => UserType::COMPANY->value,
+            'email' => 'mfw-accounts-company-' . Str::uuid() . '@example.com',
+            'password' => 'password',
+            'first_name' => 'Partner',
+            'last_name' => 'Company',
+            'phone' => '+35970000003',
+            'locale' => 'fr',
+            'civ' => 'A',
+        ]);
+
+        $account->business()->create([
+            'name' => 'Partner Company',
+            'vat_number' => 'BG123456789',
+            'reg_number' => 'REG-001',
+        ]);
+
+        return $account->refresh();
     }
 
     private function accountsPath(string $suffix = ''): string

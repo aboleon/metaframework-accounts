@@ -21,6 +21,12 @@ class AccountBusiness extends Model implements TranslatableInterface
         'name',
         'vat_number',
         'reg_number',
+        'is_seller',
+        'seller_slug',
+    ];
+
+    protected $casts = [
+        'is_seller' => 'boolean',
     ];
 
     public function setTranslatables(): array
