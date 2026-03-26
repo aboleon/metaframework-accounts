@@ -23,6 +23,8 @@ return [
     'values' => [
         UserType::SYSTEM->value,
         UserType::ACCOUNT->value,
+        UserType::COMPANY->value,
+        UserType::AGENT->value,
     ],
 
     // Fallback type when no explicit type is provided.
@@ -31,6 +33,10 @@ return [
     // Guard -> type mapping used by UserTypes::addToCredentials().
     'guards' => [
         'web' => UserType::SYSTEM->value,
-        'account' => UserType::ACCOUNT->value,
+        'account' => [
+            UserType::ACCOUNT->value,
+            UserType::COMPANY->value,
+            UserType::AGENT->value,
+        ],
     ],
 ];

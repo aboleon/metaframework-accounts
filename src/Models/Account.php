@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use MetaFramework\Accounts\Enum\UserType;
 use MetaFramework\Accounts\Support\DateFormat;
 use MetaFramework\Polyglote\Interfaces\TranslatableInterface;
 use MetaFramework\Polyglote\Traits\Translation;
@@ -90,6 +91,11 @@ class Account extends AccountUser implements TranslatableInterface
         return $this->business !== null;
     }
 
+    public function isAgent(): bool
+    {
+        return $this->type === UserType::AGENT->value || $this->company_id !== null;
+    }
+
     public function scopeDateRange(Builder $query, ?string $operator = null, ?string $date = null, ?string $date2 = null): Builder
     {
         if (empty($operator)) {
@@ -132,6 +138,16 @@ class Account extends AccountUser implements TranslatableInterface
     public function business(): HasOne
     {
         return $this->hasOne(AccountBusiness::class, 'user_id');
+    }
+
+    public function agents(): HasMany
+    {
+        return $this->hasMany(AccountAgent::class, 'company_id')->orderBy('last_name')->orderBy('first_name');
+    }
+
+    public function companyAccount(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'company_id');
     }
 
     public function setTranslatables(): array

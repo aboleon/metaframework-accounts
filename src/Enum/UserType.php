@@ -13,6 +13,8 @@ enum UserType: string implements BackedEnumInteface
 
     case SYSTEM = 'system';
     case ACCOUNT = 'account';
+    case COMPANY = 'company';
+    case AGENT = 'agent';
 
     public static function default(): string
     {

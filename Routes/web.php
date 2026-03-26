@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use MetaFramework\Accounts\Http\Controllers\AccountController;
+use MetaFramework\Accounts\Http\Controllers\AccountAgentController;
 use MetaFramework\Accounts\Http\Controllers\AjaxController;
 use MetaFramework\Accounts\Http\Controllers\CashflowDocTypeController;
 use MetaFramework\Accounts\Http\Controllers\CompanyController;
@@ -51,6 +52,10 @@ Route::prefix($routePrefix)->middleware(['web', 'auth'])->name('mfw-accounts.')-
         Route::get('dashboard/{client}', [AccountController::class, 'dashboard']);
         Route::get('{client}/welcome-mail-preview', [AccountController::class, 'welcomeMailPreview'])->name('welcome_mail_preview');
         Route::get('{client}/dashboard', [AccountController::class, 'dashboard'])->name('dashboard');
+        Route::post('{client}/agents/manage', [AccountAgentController::class, 'handle'])->name('agents.handle');
+        Route::post('{client}/agents', [AccountAgentController::class, 'store'])->name('agents.store');
+        Route::put('{client}/agents/{agent}', [AccountAgentController::class, 'update'])->name('agents.update');
+        Route::delete('{client}/agents/{agent}', [AccountAgentController::class, 'destroy'])->name('agents.destroy');
     });
     Route::resource('clients', AccountController::class)->except(['show']);
     Route::resource('vat', VatController::class);

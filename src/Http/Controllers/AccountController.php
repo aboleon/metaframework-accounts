@@ -41,6 +41,8 @@ class AccountController
             ->select(
                 'users.id',
                 'users.account_id',
+                'users.company_id',
+                'users.type',
                 'users.first_name',
                 'users.last_name',
                 'users.locale',
@@ -48,6 +50,7 @@ class AccountController
                 'users.phone',
                 'users.created_at',
             )
+            ->whereNull('users.company_id')
             ->with(['address' => fn ($q) => $q->where('billing', 1), 'business'])
             ->withCount([
                 'invoices' => fn ($query) => $query->whereIn('doc_type', [1, 5]),
@@ -100,7 +103,12 @@ class AccountController
 
     public function edit(Account $client): View
     {
-        $client->load(['address' => fn ($q) => $q->where('billing', 1)]);
+        abort_if($client->isAgent(), 404);
+
+        $client->load([
+            'address' => fn ($q) => $q->where('billing', 1),
+            'agents',
+        ]);
 
         return view('mfw-accounts::clients.edit')->with([
             'data' => $client,
@@ -110,6 +118,8 @@ class AccountController
 
     public function update(SaveAccountClientRequest $request, Account $client): RedirectResponse
     {
+        abort_if($client->isAgent(), 404);
+
         $this->persistClient($client, $this->validatedClientData($request));
         $this->persistAddress($client, $request);
 
@@ -120,6 +130,8 @@ class AccountController
 
     public function dashboard(Account $client): View
     {
+        abort_if($client->isAgent(), 404);
+
         $query = Invoice::where('account_id', $client->id)
             ->sale()
             ->whereNull('duplicata')
@@ -149,6 +161,8 @@ class AccountController
 
     public function welcomeMailPreview(Account $client): View
     {
+        abort_if($client->isAgent(), 404);
+
         $token = trim((string) request('token'));
         $passwordData = $token !== ''
             ? (new AccountWelcomePasswordStore)->retrieve($client, $token)
@@ -178,6 +192,7 @@ class AccountController
         $accountClass = AccountModel::className();
 
         $clients = $accountClass::query()
+            ->whereNull('company_id')
             ->when($name !== '', function ($query) use ($name) {
                 $firstNameExpr = AccountModel::localizedColumn('first_name', app()->getLocale());
                 $lastNameExpr = AccountModel::localizedColumn('last_name', app()->getLocale());
@@ -200,10 +215,17 @@ class AccountController
 
     public function destroy(Request $request, Account $client): JsonResponse|RedirectResponse
     {
+        abort_if($client->isAgent(), 404);
+
         $invoices = Invoice::where('account_id', $client->id)->count();
-        $error = $invoices > 0;
+        $hasAgents = $client->agents()->exists();
+        $error = $invoices > 0 || $hasAgents;
         $message = $error
-            ? __('ui.DeleteWithError', ['error' => __('mfw-accounts::ui.errorClientInvoices')])
+            ? __('ui.DeleteWithError', [
+                'error' => $hasAgents
+                    ? __('mfw-accounts::ui.company_requires_agents_cleanup')
+                    : __('mfw-accounts::ui.errorClientInvoices'),
+            ])
             : __('ui.deleted');
 
         if (!$error) {

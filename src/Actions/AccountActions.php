@@ -7,6 +7,7 @@ namespace MetaFramework\Accounts\Actions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use MetaFramework\Accounts\Enum\UserType;
 use MetaFramework\Accounts\Mailer\AccountWelcome;
 use MetaFramework\Accessors\Locale;
 use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
@@ -53,6 +54,7 @@ class AccountActions
 
         $accounts = $accountClass::query()
             ->select('id', 'first_name', 'last_name', 'email', 'locale')
+            ->whereNull('company_id')
             ->with('business')
             ->where(function ($query) use ($variants, $locales) {
                 foreach ($variants as $variant) {
@@ -125,6 +127,12 @@ class AccountActions
                     $this->responseError((string) $message);
                 }
             }
+
+            return $this;
+        }
+
+        if (!request()->boolean('is_company') && $account->agents()->exists()) {
+            $this->responseError(__('mfw-accounts::ui.company_requires_agents_cleanup'));
 
             return $this;
         }
@@ -295,6 +303,8 @@ class AccountActions
                 $account->business()->delete();
             }
 
+            $account->assignUserType(UserType::ACCOUNT->value)->save();
+
             return;
         }
 
@@ -310,11 +320,11 @@ class AccountActions
 
         if ($account->business) {
             $account->business->update($payload);
-
-            return;
+        } else {
+            $account->business()->create($payload);
         }
 
-        $account->business()->create($payload);
+        $account->assignUserType(UserType::COMPANY->value)->save();
     }
 
     private function translateNameService(mixed $value, string $fieldName): array|string|null

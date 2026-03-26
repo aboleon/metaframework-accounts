@@ -14,7 +14,16 @@ class AccountUser extends User
     use Translation;
     use TypedUser;
 
-    protected static function typedUserScopeType(): ?string
+    protected static function typedUserScopeType(): array|string|null
+    {
+        return [
+            UserType::ACCOUNT->value,
+            UserType::COMPANY->value,
+            UserType::AGENT->value,
+        ];
+    }
+
+    protected static function typedUserCreateType(): array|string|null
     {
         return UserType::ACCOUNT->value;
     }

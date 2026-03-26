@@ -92,103 +92,78 @@
                         </div>
 
                     </div>
-                    <fieldset class="my-4">
-                        <legend>{!! __('mfw-accounts::ui.Adress') !!}</legend>
-                        <x-mfw-google-places::form :model="$address"
-                            label="{{ __('mfw-accounts::ui.Adress') }} (taper pour obtenir des resultats)" />
+                    <div class="my-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <legend class="mb-0">{!! __('mfw-accounts::ui.Adress') !!}</legend>
+                            <button class="btn" type="button" data-section-toggle="#account-address-collapse" aria-expanded="true"
+                                aria-controls="account-address-collapse">
+                                <i class="bi bi-chevron-down" data-collapse-icon></i>
+                            </button>
+                        </div>
+                        <div id="account-address-collapse">
+                            <x-mfw-google-places::form :model="$address"
+                                label="{{ __('mfw-accounts::ui.Adress') }} (taper pour obtenir des resultats)" />
 
-                        <div class="row mt-3">
-                            <div class="col-sm-12">
-                                <x-mfw-inputable::textarea label="Complement d'adresse" height="80"
-                                    name="mfw_google_places[complementary]" :value="old('mfw_google_places.complementary', $address->complementary ?? null)" />
+                            <div class="row mt-3">
+                                <div class="col-sm-12">
+                                    <x-mfw-inputable::textarea label="Complement d'adresse" height="80"
+                                        name="mfw_google_places[complementary]" :value="old('mfw_google_places.complementary', $address->complementary ?? null)" />
+                                </div>
                             </div>
                         </div>
-                    </fieldset>
+                    </div>
                     <x-mfw-inputable::checkbox name="manual_fix_address" :label="__('mfw-accounts::ui.manual_address_fix')" :randomize="false" />
                     <button type="submit" class="btn btn-info ajaxable mt-4">{!! $data && $data->exists ? __('ui.save') : __('ui.add') !!}</button>
 
                 </form>
+
+                @if ($data && $data->exists)
+                    @include('mfw-accounts::clients.partials.agents', ['data' => $data])
+                @endif
             </div>
 
             <div class="col-md-5">
                 @if ($data && $data->exists)
-                    <x-translatable-google-address-corrections :model="$address" />
+                    <div id="account-address-corrections-collapse">
+                        <x-translatable-google-address-corrections :model="$address" />
+                    </div>
                 @endif
             </div>
         </div>
     </div>
 @endsection
 
-@push('js')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const clientForm = document.getElementById('account-client-form');
-
-            const manualFixToggle = document.getElementById('manual-fix-address');
-            if (manualFixToggle && clientForm) {
-                manualFixToggle.addEventListener('change', function() {
-                    if (!this.checked) {
-                        return;
-                    }
-
-                    const placeIdField = clientForm.querySelector('.gmapsbar .place_id');
-                    if (placeIdField) {
-                        placeIdField.value = '';
-                    }
-
-                    clientForm.querySelectorAll('.gmapsbar input[readonly]').forEach(input => {
-                        input.removeAttribute('readonly');
-                    });
-                });
-            }
-
-            const clientSubmit = clientForm ? clientForm.querySelector('.ajaxable') : null;
-            if (clientSubmit && manualFixToggle) {
-                clientSubmit.addEventListener('click', function() {
-                    if (!manualFixToggle.checked) {
-                        return;
-                    }
-
-                    const placeIdField = clientForm.querySelector('.gmapsbar .place_id');
-                    if (placeIdField) {
-                        placeIdField.value = '';
-                    }
-                });
-            }
-
-            const companyToggle = document.getElementById('is-company');
-            const companyFields = document.getElementById('account-company-fields');
-            if (companyToggle && companyFields) {
-                const companyInputs = companyFields.querySelectorAll('input, select, textarea');
-                companyInputs.forEach(input => {
-                    input.disabled = !companyToggle.checked;
-                });
-
-                companyToggle.addEventListener('change', function() {
-                    companyFields.style.display = this.checked ? '' : 'none';
-                    companyInputs.forEach(input => {
-                        input.disabled = !this.checked;
-                    });
-                });
-            }
-
-        });
-
-        function redirectClientEdit(result) {
-
-            if (!result || !result.client_id) {
-                return;
-            }
-
-            const form = document.getElementById('account-client-form');
-            if (!form || !form.dataset.editUrl) {
-                return;
-            }
-
-            window.location.href = form.dataset.editUrl.replace('CLIENT_ID', result.client_id);
-
+@push('css')
+    <style>
+        #account-address-collapse {
+            border: 2px dashed rgb(204, 204, 204);
+            border-radius: 17px;
+            padding: 26px;
+            background: white;
         }
-    </script>
+
+        button[data-section-toggle="#account-address-collapse"],
+        button[data-section-toggle="#account-agents-collapse"] {
+            font-size: 34px;
+            margin-top: 28px;
+            margin-bottom: -14px;
+            margin-left: 16px;
+            border: 0;
+            box-shadow: none;
+        }
+
+        button[data-section-toggle="#account-address-collapse"]:active,
+        button[data-section-toggle="#account-address-collapse"]:focus,
+        button[data-section-toggle="#account-agents-collapse"]:active,
+        button[data-section-toggle="#account-agents-collapse"]:focus {
+            border: 0;
+            box-shadow: none;
+        }
+    </style>
+@endpush
+
+@push('js')
+    <script src="{{ asset('vendor/mfw-accounts/js/clients/edit.js') }}"></script>
 @endpush
 
 
