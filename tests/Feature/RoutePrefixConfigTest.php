@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MetaFramework\Accounts\Tests\Feature;
 
 use MetaFramework\Accounts\Tests\TestCase;
+use MetaFramework\Accounts\Enum\UserType;
 use MetaFramework\Accounts\View\Components\AccountSearch;
 
 class RoutePrefixConfigTest extends TestCase
@@ -27,5 +28,13 @@ class RoutePrefixConfigTest extends TestCase
         $component = new AccountSearch();
 
         $this->assertSame('/panel/accounts-admin/ajax', $component->ajaxUrl);
+        $this->assertSame('all', $component->accountType);
+    }
+
+    public function test_account_search_component_accepts_account_type_filter(): void
+    {
+        $component = new AccountSearch(accountType: [UserType::COMPANY, UserType::AGENT->value]);
+
+        $this->assertSame([UserType::COMPANY->value, UserType::AGENT->value], $component->accountType);
     }
 }

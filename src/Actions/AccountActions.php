@@ -35,6 +35,7 @@ class AccountActions
     public function findAccountByKeywords(Request $request): array
     {
         $term = trim((string) $request->input('data'));
+        $accountTypes = $this->resolveAccountTypes($request->input('account_type'));
 
         if ($term === '' || strlen($term) < 2) {
             $this->responseElement('accounts', []);
@@ -55,6 +56,7 @@ class AccountActions
         $accounts = $accountClass::query()
             ->select('id', 'first_name', 'last_name', 'email', 'locale')
             ->whereNull('company_id')
+            ->when($accountTypes !== [], fn ($query) => $query->whereIn('type', $accountTypes))
             ->with('business')
             ->where(function ($query) use ($variants, $locales) {
                 foreach ($variants as $variant) {
@@ -641,6 +643,37 @@ class AccountActions
         }
 
         return null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveAccountTypes(mixed $accountType): array
+    {
+        if ($accountType instanceof UserType) {
+            return [$accountType->value];
+        }
+
+        $types = match (true) {
+            is_array($accountType) => $accountType,
+            is_string($accountType) => explode(',', $accountType),
+            default => [],
+        };
+
+        $allowedTypes = collect(UserType::cases())
+            ->map(fn (UserType $type): string => $type->value)
+            ->values()
+            ->all();
+
+        $normalizedTypes = collect($types)
+            ->map(fn (mixed $type): string => trim((string) $type))
+            ->filter(fn (string $type): bool => $type !== '' && $type !== 'all')
+            ->intersect($allowedTypes)
+            ->unique()
+            ->values()
+            ->all();
+
+        return $normalizedTypes;
     }
 
     private function transliterate(string $direction, string $value): string

@@ -7,6 +7,7 @@ namespace MetaFramework\Accounts\View\Components;
 use Illuminate\Support\Str;
 use Illuminate\View\Component;
 use Illuminate\View\View;
+use MetaFramework\Accounts\Enum\UserType;
 
 class AccountSearch extends Component
 {
@@ -32,6 +33,7 @@ class AccountSearch extends Component
         public string $class = '',
         public ?string $createUrl = null,
         public ?string $createLabel = null,
+        public string|array|null $accountType = 'all',
     ) {
         $this->id = $id ?: 'account-search-' . Str::random(8);
         $this->containerId = $containerId ?: $this->id . '-suggestions';
@@ -41,6 +43,7 @@ class AccountSearch extends Component
         $this->clientName = $this->clientName ?? '';
         $this->createUrl = $this->createUrl ?: route('mfw-accounts.clients.create');
         $this->createLabel = $this->createLabel ?: __('mfw-accounts::ui.NewCientAccountBtn');
+        $this->accountType = $this->normalizeAccountType($this->accountType);
     }
 
     /**
@@ -49,6 +52,32 @@ class AccountSearch extends Component
     public function render(): View|string
     {
         return view('mfw-accounts::components.accountsearch');
+    }
+
+    private function normalizeAccountType(string|array|null $accountType): string|array
+    {
+        if ($accountType === null || $accountType === '' || $accountType === 'all') {
+            return 'all';
+        }
+
+        if (is_string($accountType)) {
+            return $accountType;
+        }
+
+        $normalizedTypes = collect($accountType)
+            ->map(function (mixed $type): string {
+                if ($type instanceof UserType) {
+                    return $type->value;
+                }
+
+                return trim((string) $type);
+            })
+            ->filter(fn (string $type): bool => $type !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        return $normalizedTypes === [] ? 'all' : $normalizedTypes;
     }
 }
 

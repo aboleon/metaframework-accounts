@@ -19,6 +19,7 @@ class AccountSearch {
         this.delay = options.delay ?? 500;
         this.multiple = options.multiple || this.root.data('multiple') === true || this.root.data('multiple') === 'true';
         this.inputName = this.container.data('input-name') || 'account_id';
+        this.accountType = this.container.data('account-type') || 'all';
         this.renderItemCallback = options.renderItem || null;
         this.onSelectCallback = options.onSelect || null;
         this.currentRequestId = 0;
@@ -91,7 +92,8 @@ class AccountSearch {
                 this.pendingRequestId = requestId;
                 const containerId = this.container.attr('id') || '';
                 const formData = `action=${this.action}&callback=${this.callback}` +
-                    `&callback_container=${containerId}&data=${encodeURIComponent(data)}`;
+                    `&callback_container=${containerId}&data=${encodeURIComponent(data)}` +
+                    `&account_type=${encodeURIComponent(this.accountType)}`;
                 mfwAjax(formData, this.container);
             }, this.delay);
         });

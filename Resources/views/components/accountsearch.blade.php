@@ -7,9 +7,12 @@
         </div>
     @endif
     <div class="col-12 account-search-fields" style="{{ $showToggle && !$checked ? 'display: none;' : '' }}">
+        @php
+            $accountTypeValue = is_array($accountType) ? implode(',', $accountType) : $accountType;
+        @endphp
         <div id="{{ $containerId }}" class="position-relative account-search-container" data-ajax="{{ $ajaxUrl }}"
             data-input-name="{{ $clientInputName }}" data-create-url="{{ $createUrl }}"
-            data-create-label="{{ $createLabel }}">
+            data-create-label="{{ $createLabel }}" data-account-type="{{ $accountTypeValue }}">
             <input type="text" class="form-control account-search-input account-search-input-clearable"
                 @if (!$multiple) name="{{ $clientNameInputName }}" @endif
                 placeholder="{{ $placeholder }}"
