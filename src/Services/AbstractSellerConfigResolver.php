@@ -17,6 +17,11 @@ abstract class AbstractSellerConfigResolver
     private ?Collection $sellerConfigs = null;
 
     /**
+     * @var Collection<int, array{account_id:int, slug:string}>|null
+     */
+    private ?Collection $sellerAccounts = null;
+
+    /**
      * @return Collection<int, array<string, mixed>>
      */
     public function sellerConfigs(): Collection
@@ -31,12 +36,50 @@ abstract class AbstractSellerConfigResolver
             ->map(function (string $path): ?array {
                 $config = require $path;
 
-                return is_array($config) ? $config : null;
+                if (!is_array($config)) {
+                    return null;
+                }
+
+                $slug = pathinfo($path, PATHINFO_FILENAME);
+                $prices = $config['prices'] ?? [];
+
+                return [
+                    'slug' => trim((string)$slug),
+                    'prices' => collect(is_array($prices) ? $prices : [])
+                        ->map(fn (mixed $value): string => trim((string)$value))
+                        ->filter(fn (string $value): bool => $value !== '')
+                        ->values()
+                        ->all(),
+                ];
             })
             ->filter(fn (?array $config): bool => is_array($config))
             ->values();
 
         return $this->sellerConfigs;
+    }
+
+    /**
+     * @return Collection<int, array{account_id:int, slug:string}>
+     */
+    public function sellerAccounts(): Collection
+    {
+        if ($this->sellerAccounts instanceof Collection) {
+            return $this->sellerAccounts;
+        }
+
+        $this->sellerAccounts = AccountBusiness::query()
+            ->where('is_seller', true)
+            ->get(['user_id', 'seller_slug'])
+            ->map(function (AccountBusiness $business): array {
+                return [
+                    'account_id' => (int)$business->user_id,
+                    'slug' => trim((string)$business->seller_slug),
+                ];
+            })
+            ->filter(fn (array $seller): bool => $seller['account_id'] > 0 && $seller['slug'] !== '')
+            ->values();
+
+        return $this->sellerAccounts;
     }
 
     /**
@@ -48,19 +91,30 @@ abstract class AbstractSellerConfigResolver
             return null;
         }
 
-        $accountId = (int)($business->user_id ?? 0);
-        $sellerSlug = trim((string)($business->seller_slug ?? ''));
+        $seller = $this->sellerAccounts()->first(function (array $seller) use ($business): bool {
+            $accountId = (int)($business->user_id ?? 0);
+            $sellerSlug = trim((string)($business->seller_slug ?? ''));
 
-        return $this->sellerConfigs()->first(function (array $config) use ($accountId, $sellerSlug): bool {
-            $configAccountId = (int)($config['account_id'] ?? 0);
-            $configSlug = trim((string)($config['slug'] ?? ''));
-
-            if ($configAccountId > 0 && $configAccountId === $accountId) {
+            if ($accountId > 0 && $seller['account_id'] === $accountId) {
                 return true;
             }
 
-            return $sellerSlug !== '' && $configSlug === $sellerSlug;
+            return $sellerSlug !== '' && $seller['slug'] === $sellerSlug;
         });
+
+        if (!is_array($seller)) {
+            return null;
+        }
+
+        $config = $this->sellerConfigs()->first(function (array $config) use ($seller): bool {
+            return trim((string)($config['slug'] ?? '')) === $seller['slug'];
+        });
+
+        if (!is_array($config)) {
+            return null;
+        }
+
+        return array_merge($config, $seller);
     }
 
     /**
@@ -108,32 +162,29 @@ abstract class AbstractSellerConfigResolver
             return false;
         }
 
-        $customPrices = data_get($config, 'customConfig.customPrices', data_get($config, 'customPrices', []));
-        if (!is_array($customPrices)) {
-            return false;
+        return collect((array)($config['prices'] ?? []))
+            ->map(fn (mixed $value): string => trim((string)$value))
+            ->contains($type);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $config
+     */
+    public function customPriceSellerId(?array $config, ?int $fallback = null): ?int
+    {
+        $sellerId = (int)($config['account_id'] ?? 0);
+
+        if ($sellerId > 0) {
+            return $sellerId;
         }
 
-        if (array_is_list($customPrices)) {
-            return collect($customPrices)
-                ->map(fn (mixed $value): string => trim((string)$value))
-                ->contains($type);
-        }
-
-        if (!array_key_exists($type, $customPrices)) {
-            return false;
-        }
-
-        $typeConfig = $customPrices[$type];
-        if (is_array($typeConfig)) {
-            return (bool)($typeConfig['enabled'] ?? true);
-        }
-
-        return filter_var($typeConfig, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? (bool)$typeConfig;
+        return $fallback && $fallback > 0 ? $fallback : null;
     }
 
     public function resetCache(): void
     {
         $this->sellerConfigs = null;
+        $this->sellerAccounts = null;
     }
 
     abstract protected function sellerConfigsGlob(): string;
