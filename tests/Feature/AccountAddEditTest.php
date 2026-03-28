@@ -146,6 +146,53 @@ class AccountAddEditTest extends TestCase
         ]);
     }
 
+    public function test_update_client_address_action_persists_full_google_places_payload(): void
+    {
+        $this->actingAs($this->createSystemUser());
+        $account = $this->createAccount();
+
+        $response = $this->postJson(route('mfw-accounts.ajax'), [
+            'action' => 'update_client_address',
+            'object_id' => $account->id,
+            'mfw_google_places' => [
+                'street_number' => '12',
+                'route' => 'Rue de Test',
+                'locality' => 'Paris',
+                'postal_code' => '75001',
+                'country_code' => 'FR',
+                'place_id' => 'test-place-id',
+                'text_address' => '12 Rue de Test, 75001 Paris, France',
+                'lat' => '48.8566',
+                'lon' => '2.3522',
+                'company' => 'Acme',
+                'complementary' => 'Batiment A',
+                'administrative_area_level_1' => 'Ile-de-France',
+                'administrative_area_level_2' => 'Paris',
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('client_id', $account->id);
+        $response->assertJsonStructure([
+            'mfw_ajax_messages' => [
+                ['success'],
+            ],
+            'client_id',
+        ]);
+
+        $this->assertDatabaseHas('mfw_accounts_account_address', [
+            'user_id' => $account->id,
+            'street_number' => '12',
+            'postal_code' => '75001',
+            'country_code' => 'FR',
+            'place_id' => 'test-place-id',
+            'text_address' => '12 Rue de Test, 75001 Paris, France',
+            'company' => 'Acme',
+            'complementary' => 'Batiment A',
+            'billing' => 1,
+        ]);
+    }
+
     private function createSystemUser(): User
     {
         return User::query()->create([

@@ -12,6 +12,7 @@ use MetaFramework\Accounts\Enum\UserType;
 use MetaFramework\Accounts\Mailer\AccountWelcome;
 use MetaFramework\Accessors\Locale;
 use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAddressRequest;
 use MetaFramework\Accounts\Http\Requests\UpdateAddressTranslationsRequest;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
@@ -223,11 +224,10 @@ class AccountActions
         }
 
         try {
-            $validated = Validator::make(request()->all(), [
-                'mfw_google_places' => ['required', 'array'],
-                'mfw_google_places.complementary' => ['nullable', 'string'],
-                'manual_fix_address' => ['nullable', 'boolean'],
-            ])->validate();
+            $validation = new ValidationInstance;
+            $validation->validation(UpdateAccountClientAddressRequest::class);
+            $validated = $validation->validatedData();
+            $validated = is_array($validated) ? $validated : [];
         } catch (ValidationException $exception) {
             foreach ($exception->errors() as $messages) {
                 foreach ($messages as $message) {
