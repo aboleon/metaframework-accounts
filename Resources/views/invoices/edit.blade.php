@@ -188,8 +188,8 @@
                                         <textarea name='content[]' class="form-control">{!! $virgo['content'] !!}</textarea>
                                     </td>
                                     <td class="unit">
-                                        <input name='quantity[]' value="{!! $virgo['quantity'] !!}" size=2
-                                            class='digit center form-control' />
+                                        <input type="number" name='quantity[]' value="{!! $virgo['quantity'] !!}" min="1"
+                                            step="1" inputmode="numeric" size=2 class='digit center form-control' />
                                     </td>
                                     <td class="price">
                                         <input name='amount[]' value="{!! $virgo['amount'] !!}" size=8
@@ -226,8 +226,8 @@
                                     <textarea name='content[]' class="form-control">{!! $data->content ?? null !!}</textarea>
                                 </td>
                                 <td class="unit">
-                                    <input name='quantity[]' value="{!! $data->quantity ?? 1 !!}" size=2
-                                        class='digit center form-control' />
+                                    <input type="number" name='quantity[]' value="{!! $data->quantity ?? 1 !!}" min="1"
+                                        step="1" inputmode="numeric" size=2 class='digit center form-control' />
                                 </td>
                                 <td class="price">
                                     <input name='amount[]' value="{!! $data->amount ?? 0 !!}" size=8

@@ -165,6 +165,57 @@ class InvoiceControllerTest extends TestCase
         $response->assertSessionHasErrors(['account_id', 'doc_type', 'invoice_date', 'currency', 'amount.0', 'vat.0', 'quantity.0']);
     }
 
+    public function test_update_rejects_multiline_quantity_lower_than_one(): void
+    {
+        $this->actingAs($this->createSystemUser());
+        $docType = $this->seedCashflowDocType(['id' => 5, 'slug' => 'invoice']);
+        $invoice = $this->createInvoice([
+            'doc_type' => $docType->id,
+            'document_id' => 255,
+        ]);
+
+        $response = $this->from(route('mfw-accounts.invoices.edit', $invoice))
+            ->put(route('mfw-accounts.invoices.update', $invoice), $this->validUpdatePayload($invoice, [
+                'amount' => [100, 5000],
+                'vat' => [0, 0],
+                'quantity' => [1, -1],
+                'content' => ['Line A', 'Avans'],
+            ]));
+
+        $response->assertRedirect(route('mfw-accounts.invoices.edit', $invoice));
+        $response->assertSessionHasErrors(['quantity.1']);
+        $this->assertSame(0, $invoice->details()->count());
+    }
+
+    public function test_ajax_process_rejects_multiline_quantity_lower_than_one(): void
+    {
+        $this->actingAs($this->createSystemUser());
+        $docType = $this->seedCashflowDocType(['id' => 5, 'slug' => 'invoice']);
+        $invoice = $this->createInvoice([
+            'doc_type' => $docType->id,
+            'document_id' => 256,
+        ]);
+
+        $response = $this->postJson(route('mfw-accounts.ajax'), array_merge(
+            $this->validUpdatePayload($invoice, [
+                'amount' => [100, 5000],
+                'vat' => [0, 0],
+                'quantity' => [1, -1],
+                'content' => ['Line A', 'Avans'],
+            ]),
+            [
+                'object' => 'Invoices',
+                'ajax_action' => 'process',
+                'object_id' => $invoice->id,
+                'id' => $invoice->id,
+            ],
+        ));
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['quantity.1']);
+        $this->assertSame(0, $invoice->details()->count());
+    }
+
     public function test_update_updates_single_line_invoice_and_sets_date_paid(): void
     {
         $this->actingAs($this->createSystemUser());

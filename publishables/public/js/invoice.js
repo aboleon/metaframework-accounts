@@ -28,10 +28,15 @@ function calculations () {
     $('#callContainer')
         .off('change.calc keyup.calc', 'input.digit')
         .off('change.calc', '.vat_select select')
+        .off('input.quantity change.quantity blur.quantity', 'td.unit input')
         .on('change.calc keyup.calc', 'input.digit', function () {
             reset_calculations();
         })
         .on('change.calc', '.vat_select select', function () {
+            reset_calculations();
+        })
+        .on('input.quantity change.quantity blur.quantity', 'td.unit input', function () {
+            enforceQuantityMinimum($(this));
             reset_calculations();
         });
 }
@@ -44,7 +49,7 @@ function reset_calculations() {
 
     $('#callContainer tbody tr').each(function() {
         var price = toNumber($('.price input', this).val());
-        var quantity = toNumber($('.unit input', this).val());
+        var quantity = enforceQuantityMinimum($('.unit input', this));
         var prix_ht = price * quantity;
 
         // Get VAT rate from data-rate attribute (e.g., 20 for 20%)
@@ -77,6 +82,18 @@ function reset_calculations() {
 function toNumber(value) {
     var normalized = forceValidFloat(String(value ?? ''));
     return parseFloat(normalized) || 0;
+}
+
+function enforceQuantityMinimum($input) {
+    let quantity = parseInt(forceValidFloat(String($input.val() ?? '')), 10);
+
+    if (!Number.isFinite(quantity) || quantity < 1) {
+        quantity = 1;
+    }
+
+    $input.val(quantity);
+
+    return quantity;
 }
 
 function trimValue(value) {

@@ -12,7 +12,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('users') || !Schema::hasColumn('users', UserTypes::column())) {
+        if (!$this->canModifyUserTypeEnum()) {
             return;
         }
 
@@ -31,7 +31,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasTable('users') || !Schema::hasColumn('users', UserTypes::column())) {
+        if (!$this->canModifyUserTypeEnum()) {
             return;
         }
 
@@ -42,5 +42,12 @@ return new class extends Migration
             UserType::SYSTEM->value,
             UserType::SYSTEM->value,
         ));
+    }
+
+    private function canModifyUserTypeEnum(): bool
+    {
+        return DB::connection()->getDriverName() === 'mysql'
+            && Schema::hasTable('users')
+            && Schema::hasColumn('users', UserTypes::column());
     }
 };

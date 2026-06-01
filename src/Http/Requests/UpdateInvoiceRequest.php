@@ -53,7 +53,7 @@ class UpdateInvoiceRequest extends FormRequest
             'vat_id' => 'array',
             'vat_id.*' => 'integer|nullable',
             'quantity' => 'array',
-            'quantity.*' => 'numeric|nullable',
+            'quantity.*' => 'required|integer|min:1',
             'content' => 'array',
             'content.*' => 'nullable|string',
             'expenses' => 'nullable|numeric',
