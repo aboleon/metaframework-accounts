@@ -9,8 +9,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "aboleon/metaframework": "^1.0",
         "aboleon/metaframework-google-places": "^1.2",
-        "aboleon/metaframework-mailer": "0.*",
-        "aboleon/metaframework-mediaclass": "0.*|^1.0"
+        "aboleon/metaframework-mailer": "0.*"
     },
     "autoload": {
         "psr-4": {
