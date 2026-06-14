@@ -37,7 +37,7 @@ This creates all `mfw_accounts_*` tables in the configured database. See [Databa
 | `aboleon/metaframework` | `dev-mfw-2026` or `^1.0` | Core MetaFramework |
 | `aboleon/metaframework-google-places` | `^1.2` | Address autocomplete (Google Places API) |
 | `aboleon/metaframework-mailer` | `0.*` | Invoice email dispatch |
-| `aboleon/metaframework-mediaclass` | `0.*` | Media/file handling |
+| `aboleon/metaframework-mediaclass` | `0.*` or `^1.0` | Media/file handling |
 | `barryvdh/laravel-dompdf` | `^3.1` | PDF generation |
 | `maatwebsite/excel` | `^3.1` | Excel export |
 
