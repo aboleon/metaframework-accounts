@@ -123,21 +123,41 @@ function updateConvertedTotal(total) {
         .text(formatPrice(totalConverted) + (targetLabel ? ' ' + targetLabel : ''));
 }
 
-function deleteLine() {
-    // Use event delegation so it works for dynamically added rows
-    $('#callContainer')
-        .off('click.delete', 'span.glyphicon-remove')
-        .on('click.delete', 'span.glyphicon-remove', function() {
-            $(this).parents('tr').remove();
+function refreshInvoiceLineDeleteControls() {
+    let rows = $('#callContainer tbody tr'),
+        canDeleteLine = rows.length > 1;
+
+    rows.each(function(index) {
+        let rowId = 'invoice-line-' + index;
+
+        $(this).attr('id', rowId);
+        $(this).find('.invoice-line-delete')
+            .attr('data-identifier', '#' + rowId)
+            .toggleClass('d-none', !canDeleteLine);
+    });
+}
+
+function bindDeleteInvoiceLineFromModal() {
+    $('#mfw-simple-modal .btn-confirm')
+        .off('click.invoiceLineDelete')
+        .on('click.invoiceLineDelete', function() {
+            let identifier = $(this).attr('data-identifier');
+
+            if ($('#callContainer tbody tr').length <= 1) {
+                $('#mfw-simple-modal').find('.btn-cancel').trigger('click');
+                return;
+            }
+
+            $(identifier).remove();
             reset_calculations();
+            refreshInvoiceLineDeleteControls();
+            $('#mfw-simple-modal').find('.btn-cancel').trigger('click');
         });
 }
 
 $(function() {
     calculations();
-    deleteLine();
-
-    $('#callContainer span.glyphicon-remove:first').addClass('hidden');
+    refreshInvoiceLineDeleteControls();
 
     // Payment status radio - show/hide date inputs
     // --------------------------------------------
@@ -246,10 +266,11 @@ $(function() {
         $('#callContainer tbody tr:last').clone().appendTo('#callContainer tbody');
         var $newRow = $('#callContainer tbody tr:last');
         $newRow.find('input,textarea').val('');
-        $newRow.find('span').text('').removeClass('hidden');
+        $newRow.find('td.vat > span, td.subtotal span').text('');
         $newRow.find('td.unit input').val(1);
         $newRow.find('td.price input').val(0);
         $newRow.find('td.vat input').val(0);
+        refreshInvoiceLineDeleteControls();
 
         reset_calculations();
     });

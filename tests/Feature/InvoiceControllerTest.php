@@ -7,11 +7,17 @@ namespace MetaFramework\Accounts\Tests\Feature;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
 use MetaFramework\Accounts\Http\Controllers\InvoiceController;
 use MetaFramework\Accounts\Models\Invoice;
+use MetaFramework\Accounts\Models\Vat;
 use MetaFramework\Accounts\Tests\Feature\Concerns\InteractsWithAccountsControllerData;
 use MetaFramework\Accounts\Tests\TestCase;
+use MetaFramework\Inputable\InputableServiceProvider;
+use MetaFramework\ServiceProvider as MetaFrameworkServiceProvider;
+use MetaFramework\Support\SupportServiceProvider;
 
 class InvoiceControllerTest extends TestCase
 {
@@ -142,6 +148,86 @@ class InvoiceControllerTest extends TestCase
         $this->assertArrayHasKey('accessor', $data);
         $this->assertArrayHasKey('expenseAccessor', $data);
         $this->assertArrayHasKey('bank_accounts', $data);
+    }
+
+    public function test_edit_route_renders_invoice_line_delete_modals_with_matching_table_columns(): void
+    {
+        $this->app->register(MetaFrameworkServiceProvider::class);
+        $this->app->register(SupportServiceProvider::class);
+        $this->app->register(InputableServiceProvider::class);
+        view()->addLocation(__DIR__ . '/../stubs/views');
+        Blade::anonymousComponentPath(__DIR__ . '/../stubs/views/components');
+        Cache::forget('vats');
+        Cache::forget('default_vat_rate');
+        $publicPath = storage_path('framework/testing/public');
+        $this->app->usePublicPath($publicPath);
+        File::ensureDirectoryExists($publicPath . '/vendor/mfw-accounts/css');
+        File::put($publicPath . '/vendor/mfw-accounts/css/panel.css', '');
+
+        $this->actingAs($this->createSystemUser());
+        $docType = $this->seedCashflowDocType([
+            'id' => 5,
+            'slug' => 'invoice',
+            'name' => 'Invoice',
+            'admin_name' => 'Invoice',
+        ]);
+        $this->seedCurrency(['id' => 1, 'name' => 'Euro', 'code' => 'EUR', 'sign' => 'EUR']);
+        $vat = Vat::query()->create(['rate' => 20, 'default' => 1]);
+        $invoice = $this->createInvoice([
+            'doc_type' => $docType->id,
+            'document_id' => 211,
+            'amount' => 300,
+            'vat' => 60,
+            'vat_id' => $vat->id,
+        ]);
+        $invoice->details()->createMany([
+            [
+                'content' => 'First service',
+                'quantity' => 1,
+                'amount' => 100,
+                'vat' => 20,
+                'vat_id' => $vat->id,
+            ],
+            [
+                'content' => 'Second service',
+                'quantity' => 2,
+                'amount' => 200,
+                'vat' => 40,
+                'vat_id' => $vat->id,
+            ],
+        ]);
+
+        $response = $this->get(route('mfw-accounts.invoices.edit', $invoice));
+
+        $response->assertOk();
+        $response->assertViewIs('mfw-accounts::invoices.edit');
+
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $response->getContent());
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $xpath = new \DOMXPath($dom);
+        $headerCells = $xpath->query('//table[@id="callContainer"]/thead/tr/*[self::th or self::td]');
+        $rows = $xpath->query('//table[@id="callContainer"]/tbody/tr');
+
+        $this->assertSame(7, $headerCells?->length);
+        $this->assertSame(2, $rows?->length);
+
+        foreach ($rows as $index => $row) {
+            $cells = $xpath->query('./*[self::th or self::td]', $row);
+            $actionCell = $cells?->item(6);
+            $actionHtml = $actionCell ? $dom->saveHTML($actionCell) : '';
+
+            $this->assertSame('invoice-line-' . $index, $row->getAttribute('id'));
+            $this->assertSame($headerCells?->length, $cells?->length);
+            $this->assertStringContainsString('data-bs-target="#mfw-simple-modal"', $actionHtml);
+            $this->assertStringContainsString('data-modal-id="delete_invoice_line"', $actionHtml);
+            $this->assertStringContainsString('data-callback="bindDeleteInvoiceLineFromModal"', $actionHtml);
+            $this->assertStringContainsString('data-identifier="#invoice-line-' . $index . '"', $actionHtml);
+            $this->assertStringContainsString('bi bi-trash-fill', $actionHtml);
+        }
     }
 
     public function test_update_validates_payload(): void

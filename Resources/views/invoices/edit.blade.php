@@ -183,7 +183,10 @@
                                     $amountTVA[] = $vatValue;
                                 @endphp
 
-                                <tr>
+                                @php
+                                    $lineIdentifier = 'invoice-line-' . $key;
+                                @endphp
+                                <tr id="{{ $lineIdentifier }}">
                                     <td class="NoLeftPadding">
                                         <textarea name='content[]' class="form-control">{!! $virgo['content'] !!}</textarea>
                                     </td>
@@ -206,7 +209,14 @@
                                         <span class="subtotal">{!! str_replace('.00', '', number_format($subtotal, 2, '.', ' ')) !!}</span>
                                         <span class="currency">{!! $data->currencyType->name !!}</span>
                                     </td>
-                                    <th><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></th>
+                                    <td class="text-end">
+                                        <x-mfw::simple-modal id="delete_invoice_line"
+                                            class="btn btn-danger btn-sm pt-2 invoice-line-delete"
+                                            :title="__('mfw.deletion')" :body="__('mfw.should_i_delete_record')"
+                                            confirmclass="btn-danger" :confirm="__('mfw.delete')"
+                                            callback="bindDeleteInvoiceLineFromModal" identifier="#{{ $lineIdentifier }}"
+                                            linktitle="{{ __('mfw.delete') }}" text='<i class="bi bi-trash-fill"></i>' />
+                                    </td>
                                 </tr>
                             @endforeach
                             @php
@@ -221,7 +231,7 @@
                                 ?>
                             @endif
 
-                            <tr>
+                            <tr id="invoice-line-0">
                                 <td class="NoLeftPadding">
                                     <textarea name='content[]' class="form-control">{!! $data->content ?? null !!}</textarea>
                                 </td>
@@ -244,7 +254,14 @@
                                     <span class="subtotal"></span>
                                     <span class="currency"></span>
                                 </td>
-                                <th><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></th>
+                                <td class="text-end">
+                                    <x-mfw::simple-modal id="delete_invoice_line"
+                                        class="btn btn-danger btn-sm pt-2 invoice-line-delete"
+                                        :title="__('mfw.deletion')" :body="__('mfw.should_i_delete_record')"
+                                        confirmclass="btn-danger" :confirm="__('mfw.delete')"
+                                        callback="bindDeleteInvoiceLineFromModal" identifier="#invoice-line-0"
+                                        linktitle="{{ __('mfw.delete') }}" text='<i class="bi bi-trash-fill"></i>' />
+                                </td>
                             </tr>
                         @endif
                     </tbody>
