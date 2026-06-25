@@ -6,7 +6,7 @@ namespace MetaFramework\Accounts\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SaveAccountClientRequest extends FormRequest
+class UpdateAccountClientInfoAjaxRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,12 +16,13 @@ class SaveAccountClientRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:128',
-            'civ' => 'nullable|string|max:10',
-            'locale' => 'nullable|string|max:2',
+            'first_name' => ['nullable'],
+            'last_name' => ['nullable'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:128'],
+            'civ' => ['nullable', 'string', 'max:10'],
+            'locale' => ['nullable', 'string', 'max:2'],
+            'is_company' => ['nullable', 'boolean'],
         ];
     }
 
@@ -34,6 +35,7 @@ class SaveAccountClientRequest extends FormRequest
             'phone' => __('mfw-accounts::ui.phone'),
             'civ' => __('mfw-accounts::ui.CIV'),
             'locale' => __('ui.lg'),
+            'is_company' => __('mfw-accounts::ui.is_company'),
         ];
     }
 

@@ -5,21 +5,22 @@ declare(strict_types=1);
 namespace MetaFramework\Accounts\Actions;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use MetaFramework\Accounts\Enum\UserType;
-use MetaFramework\Accounts\Mailer\AccountWelcome;
 use MetaFramework\Accessors\Locale;
-use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
+use MetaFramework\Accounts\Enum\UserType;
 use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAddressRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateAccountClientAjaxRequest;
+use MetaFramework\Accounts\Http\Requests\UpdateAccountClientInfoAjaxRequest;
 use MetaFramework\Accounts\Http\Requests\UpdateAddressTranslationsRequest;
+use MetaFramework\Accounts\Mailer\AccountWelcome;
 use MetaFramework\Accounts\Models\Account;
 use MetaFramework\Accounts\Models\AccountAddress;
 use MetaFramework\Accounts\Models\AccountAgent;
+use MetaFramework\Accounts\Services\SellerConfigSkeletonWriter;
 use MetaFramework\Accounts\Support\AccountModel;
 use MetaFramework\Accounts\Support\AccountWelcomePasswordStore;
-use MetaFramework\Accounts\Services\SellerConfigSkeletonWriter;
 use MetaFramework\Accounts\Validators\AccountMailValidator;
 use MetaFramework\Mailer\Http\Controllers\MailController;
 use MetaFramework\Polyglote\Traits\CyrillicContentTrait;
@@ -35,6 +36,23 @@ class AccountActions
     use TransliterationTrait;
 
     private const int REDIRECT_DELAY_SECONDS = 3;
+
+    /**
+     * @var array<int, string>
+     */
+    private const array ADDRESS_PAYLOAD_SIGNAL_FIELDS = [
+        'text_address',
+        'place_id',
+        'street_number',
+        'route',
+        'locality',
+        'postal_code',
+        'country_code',
+        'administrative_area_level_1',
+        'administrative_area_level_2',
+        'company',
+        'complementary',
+    ];
 
     public function findAccountByKeywords(Request $request): array
     {
@@ -153,7 +171,10 @@ class AccountActions
 
         $this->persistClient($account, $validated);
         $this->persistBusiness($account, $validated, $isNew);
-        $this->persistAddress($account, request()->input('mfw_google_places', []));
+        $this->storeSubmittedClientAddress($account);
+        if ($this->hasErrors()) {
+            return $this;
+        }
 
         $this->responseSuccess(__('mfw-accounts::ui.client.is_saved'));
 
@@ -176,15 +197,10 @@ class AccountActions
         }
 
         try {
-            $validated = Validator::make(request()->all(), [
-                'first_name' => ['nullable'],
-                'last_name' => ['nullable'],
-                'email' => ['nullable', 'email', 'max:255'],
-                'phone' => ['nullable', 'string', 'max:128'],
-                'civ' => ['nullable', 'string', 'max:10'],
-                'locale' => ['nullable', 'string', 'max:5'],
-                'is_company' => ['nullable', 'boolean'],
-            ])->validate();
+            $validation = new ValidationInstance;
+            $validation->validation(UpdateAccountClientInfoAjaxRequest::class);
+            $validated = $validation->validatedData();
+            $validated = is_array($validated) ? $validated : [];
         } catch (ValidationException $exception) {
             foreach ($exception->errors() as $messages) {
                 foreach ($messages as $message) {
@@ -203,6 +219,11 @@ class AccountActions
 
         $this->persistClient($account, $validated);
         $this->persistCompanyState($account, request()->boolean('is_company'));
+        $this->storeSubmittedClientAddress($account);
+        if ($this->hasErrors()) {
+            return $this;
+        }
+
         $this->responseSuccess(__('mfw-accounts::ui.client.is_saved'));
 
         if ($isNew) {
@@ -349,7 +370,7 @@ class AccountActions
             return $this;
         }
 
-        $agent = app(\MetaFramework\Accounts\Actions\AccountAgentActions::class)->persist($client, $agent, $validated);
+        $agent = app(AccountAgentActions::class)->persist($client, $agent, $validated);
 
         $this->responseSuccess(__('mfw-accounts::ui.agent.saved'));
         $this->responseElement('callback', 'handleClientAgentActionResult');
@@ -648,6 +669,44 @@ class AccountActions
         }
 
         $account->address()->create($addressData);
+    }
+
+    private function storeSubmittedClientAddress(Account $account): void
+    {
+        if (!$this->hasSubmittedAddressPayload()) {
+            return;
+        }
+
+        request()->merge(['object_id' => $account->id]);
+
+        $addressAction = (new self)
+            ->ajaxMode()
+            ->updateClientAddressData();
+
+        if ($addressAction->hasErrors()) {
+            $this->pushMessages($addressAction);
+        }
+    }
+
+    private function hasSubmittedAddressPayload(): bool
+    {
+        $geoData = request('mfw_google_places', []);
+        if (!is_array($geoData)) {
+            return false;
+        }
+
+        foreach (self::ADDRESS_PAYLOAD_SIGNAL_FIELDS as $field) {
+            if (!array_key_exists($field, $geoData)) {
+                continue;
+            }
+
+            $value = trim((string) $geoData[$field]);
+            if ($value !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -979,5 +1038,3 @@ class AccountActions
         return $result === false ? $value : $result;
     }
 }
-
-

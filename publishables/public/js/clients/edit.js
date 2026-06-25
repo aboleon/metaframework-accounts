@@ -1,5 +1,7 @@
 $(function () {
     const $clientForm = $('#account-client-form');
+    const $infoForm = $('#account-client-info-form');
+    const $addressForm = $('#account-client-address-form');
     const $manualFixToggle = $('[name="manual_fix_address"]').first();
     const $companyToggle = $('[name="is_company"]').first();
     const $companyFields = $('#account-company-fields');
@@ -45,6 +47,8 @@ $(function () {
             }
         });
     }
+
+    bindCreateAddressPayloadMerge($infoForm, $addressForm, trimValue);
 
     const slugifySellerValue = function (value) {
         return String(value || '')
@@ -273,6 +277,118 @@ function bindAgentsSection($form) {
 
     $form.find('[data-agent-card]').each(function () {
         bindAgentCard($form, $(this));
+    });
+}
+
+function bindCreateAddressPayloadMerge($infoForm, $addressForm, trimValue) {
+    if (!$infoForm.length || !$addressForm.length) {
+        return;
+    }
+
+    const $submit = $infoForm.find('.ajaxable').first();
+    if (!$submit.length) {
+        return;
+    }
+
+    $submit.off('click').on('click.account-client-create', function (event) {
+        const $button = $(this);
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        $('div.messages').remove();
+        $('#uncachtableType').remove();
+
+        if (typeof spinner !== 'undefined') {
+            $button.append(spinner);
+            $button.find('i.spinner').fadeIn();
+        }
+
+        if (typeof tinyMCE !== 'undefined' && typeof tinyMCE.triggerSave === 'function' && tinyMCE.editors && tinyMCE.editors.length > 0) {
+            tinyMCE.triggerSave();
+        }
+
+        if (typeof $button.attr('data-object') !== 'undefined' && $infoForm.find('input[name="object"]').length) {
+            $infoForm.find('input[name="object"]').val($button.attr('data-object'));
+        }
+
+        applyManualAddressFix($addressForm);
+
+        const requestData = $infoForm.find('input, select, textarea').serializeArray();
+
+        if (createAddressPayloadIsFilled($infoForm, $addressForm, trimValue)) {
+            appendAddressFields(requestData, $addressForm);
+        }
+
+        const ajaxableType = $button.attr('type');
+        const buttonName = $button.attr('name');
+
+        if ((ajaxableType === 'button' || ajaxableType === 'submit') && buttonName) {
+            requestData.push({
+                name: buttonName,
+                value: $button.val() ?? '',
+            });
+        }
+
+        mfwAjax($.param(requestData), $infoForm);
+
+        return false;
+    });
+}
+
+function applyManualAddressFix($addressForm) {
+    const $manualFixToggle = $addressForm.find('[name="manual_fix_address"]').first();
+
+    if (!$manualFixToggle.length || !$manualFixToggle.is(':checked')) {
+        return;
+    }
+
+    const $placeIdField = $addressForm.find('.gmapsbar .place_id');
+    if ($placeIdField.length) {
+        $placeIdField.val('');
+    }
+}
+
+function createAddressPayloadIsFilled($infoForm, $addressForm, trimValue) {
+    const $objectId = $infoForm.find('input[name="object_id"]').first();
+    if (trimValue($objectId.val()) !== '') {
+        return false;
+    }
+
+    const addressFields = [
+        'text_address',
+        'place_id',
+        'street_number',
+        'route',
+        'locality',
+        'postal_code',
+        'country_code',
+        'administrative_area_level_1',
+        'administrative_area_level_2',
+        'company',
+        'complementary',
+    ];
+
+    for (let index = 0; index < addressFields.length; index++) {
+        const field = addressFields[index];
+        const value = $addressForm.find('[name="mfw_google_places[' + field + ']"]').first().val();
+
+        if (trimValue(value) !== '') {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function appendAddressFields(requestData, $addressForm) {
+    const ignoredFields = ['_token', 'action', 'object_id'];
+
+    $.each($addressForm.find('input, select, textarea').serializeArray(), function (index, field) {
+        if (ignoredFields.indexOf(field.name) !== -1) {
+            return;
+        }
+
+        requestData.push(field);
     });
 }
 

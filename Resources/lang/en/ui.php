@@ -265,6 +265,7 @@ return [
         'noms' => 'Names',
         'created' => 'Created',
         'not_found' => 'Client not found',
+        'email_required' => 'Enter the client email address in the e-mail field.',
         'redirect_notice' => 'Redirect in :seconds seconds',
     ],
     'agent' => [

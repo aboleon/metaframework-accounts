@@ -265,6 +265,7 @@ return [
         'noms' => 'Имена',
         'created' => 'Създаден',
         'not_found' => 'Client introuvable',
+        'email_required' => "Renseignez l'adresse e-mail du client dans le champ e-mail.",
         'redirect_notice' => 'Redirection dans :seconds secondes',
     ],
     'agent' => [

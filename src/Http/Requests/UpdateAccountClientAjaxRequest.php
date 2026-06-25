@@ -44,6 +44,13 @@ class UpdateAccountClientAjaxRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'email.required' => __('mfw-accounts::ui.client.email_required'),
+        ];
+    }
+
     /**
      * @return array<string, array<int, string>>
      */
@@ -52,7 +59,7 @@ class UpdateAccountClientAjaxRequest extends FormRequest
         return [
             'first_name' => ['nullable'],
             'last_name' => ['nullable'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:128'],
             'civ' => ['nullable', 'string', 'max:10'],
             'locale' => ['nullable', 'string', 'max:2'],
