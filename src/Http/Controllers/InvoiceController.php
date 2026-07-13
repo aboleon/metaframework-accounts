@@ -18,6 +18,7 @@ use MetaFramework\Accounts\Models\CashflowDocTypes;
 use MetaFramework\Accounts\Models\Currency;
 use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Accounts\Models\InvoiceStructure;
+use MetaFramework\Accounts\Support\InvoiceExtensionResolver;
 use MetaFramework\Services\Validation\ValidationInstance;
 
 class InvoiceController
@@ -255,6 +256,8 @@ class InvoiceController
         $invoice->pay_mean = $data['pay_mean'] ?? null;
         $invoice->document_id = $data['document_id'] ?? $invoice->document_id;
 
+        app(InvoiceExtensionResolver::class)->resolve()?->persist($invoice, $data);
+
         if ($invoice->paid !== null && !$invoice->duplicata && $expensesProvided) {
             $invoice->expenses = $expenses;
         }
@@ -341,5 +344,4 @@ class InvoiceController
         return $invoice;
     }
 }
-
 

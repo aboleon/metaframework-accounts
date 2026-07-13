@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MetaFramework\Accounts\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use MetaFramework\Accounts\Support\InvoiceExtensionResolver;
 use MetaFramework\Traits\NumericInputNormalizer;
 
 class UpdateInvoiceRequest extends FormRequest
@@ -27,7 +28,7 @@ class UpdateInvoiceRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'id' => 'nullable|integer|exists:mfw_accounts_invoices,id',
             'object_id' => 'nullable|integer|exists:mfw_accounts_invoices,id',
             'account_id' => 'required|integer|exists:users,id',
@@ -60,5 +61,9 @@ class UpdateInvoiceRequest extends FormRequest
             'expense_associations' => 'nullable|array',
             'expense_associations.*' => 'integer|exists:mfw_accounts_invoices,id',
         ];
+
+        $extension = app(InvoiceExtensionResolver::class)->resolve();
+
+        return array_merge($rules, $extension?->rules() ?? []);
     }
 }

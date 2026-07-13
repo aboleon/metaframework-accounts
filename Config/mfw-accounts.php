@@ -20,6 +20,11 @@ return [
         'default_currency_id' => 1,
     ],
 
+    'extensions' => [
+        'invoice' => null,
+        'invoice_view' => null,
+    ],
+
     // Optional secondary/reporting currency conversion.
     // Keep source/rate null to disable conversion in a host app.
     'reporting_currency' => [

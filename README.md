@@ -55,6 +55,7 @@ Laravel package discovery registers `MetaFramework\Accounts\Providers\AccountsSe
 - Asset URLs are expected under `public/vendor/mfw-accounts`.
 - Route prefix is configurable via `config('mfw-accounts.route_prefix')`; route names are stable (`mfw-accounts.*`).
 - The account model class is configurable via `config('mfw-accounts.models.account')`, so host apps can extend the package model cleanly.
+- Invoice edit fields can be added through the optional `config('mfw-accounts.extensions.invoice')` extension contract without replacing package controllers or routes.
 - The front account skeleton (`mfw-accounts-front` tag or `php artisan mfw-accounts:front`) is optional and must be explicitly installed.
 - User type segregation config (`config/mfw-user-types.php`) is owned/published by this package via the `mfw-user-types` tag.
 - Backward-compatibility alias: the tag `mfw-account` (without trailing `s`) maps to the same skeleton.
