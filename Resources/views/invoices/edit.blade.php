@@ -346,6 +346,9 @@
                         </div>
                     </div>
 
+                    @if ($invoiceExtensionView = config('mfw-accounts.extensions.invoice_view'))
+                        @include($invoiceExtensionView, ['invoice' => $data])
+                    @endif
 
                     <div class="text-center">
                         <button type="submit" name="save" value="{!! __('ui.save') !!}"
@@ -381,10 +384,6 @@
                 </div>
             </div>
             <hr />
-
-            @if ($invoiceExtensionView = config('mfw-accounts.extensions.invoice_view'))
-                @include($invoiceExtensionView, ['invoice' => $data])
-            @endif
         </div>
     </div>
 
