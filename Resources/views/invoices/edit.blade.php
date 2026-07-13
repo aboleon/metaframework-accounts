@@ -152,10 +152,6 @@
                     </div>
                 </div>
 
-                @if ($invoiceExtensionView = config('mfw-accounts.extensions.invoice_view'))
-                    @include($invoiceExtensionView, ['invoice' => $data])
-                @endif
-
                 <table id="callContainer" class="table-condensed table-responsive table capitalize">
                     <thead>
                         <tr>
@@ -385,6 +381,10 @@
                 </div>
             </div>
             <hr />
+
+            @if ($invoiceExtensionView = config('mfw-accounts.extensions.invoice_view'))
+                @include($invoiceExtensionView, ['invoice' => $data])
+            @endif
         </div>
     </div>
 
