@@ -233,6 +233,8 @@ return [
     'Account' => 'Account',
     'Client' => 'Client|Clients',
     'search_client' => 'Search a client',
+    'invoice_search' => 'Invoice search',
+    'invoice_search_placeholder' => 'Title, note, line, client...',
     'particulier' => 'individual',
     'originalInfo' => 'Original information',
     'errorClientInvoices' => 'This client has an accounting history',

@@ -73,6 +73,62 @@ class InvoiceControllerTest extends TestCase
         $this->assertArrayHasKey($docType->id, $data['doc_types']);
     }
 
+    public function test_index_search_matches_invoice_text_lines_and_client_and_combines_with_filters(): void
+    {
+        $docType = $this->seedCashflowDocType([
+            'id' => 5,
+            'slug' => 'invoice',
+            'name' => 'Invoice',
+            'admin_name' => 'Invoice',
+        ]);
+        $client = $this->createAccount([
+            'first_name' => 'Searchable',
+            'last_name' => 'Client',
+        ]);
+        $operator = $this->createSystemUser();
+
+        $invoice = $this->createInvoice([
+            'account' => $client,
+            'operator' => $operator,
+            'doc_type' => $docType->id,
+            'document_id' => 203,
+            'paid' => 1,
+            'title' => 'Ordinary title',
+            'notes' => 'Important note',
+        ]);
+        $invoice->details()->create([
+            'content' => 'Special line item',
+            'quantity' => 1,
+            'amount' => 1,
+            'vat' => 0,
+        ]);
+        $this->createInvoice([
+            'account' => $client,
+            'operator' => $operator,
+            'doc_type' => $docType->id,
+            'document_id' => 204,
+            'paid' => null,
+            'title' => 'Special title',
+        ]);
+
+        $request = Request::create('/mfw-accounts/invoices', 'GET', [
+            'search' => 'special',
+            'paid' => 'paid',
+        ]);
+        $this->app->instance('request', $request);
+
+        $view = (new InvoiceController)->index();
+
+        $invoices = $view->getData()['invoices'];
+        $this->assertSame(1, $invoices->total());
+        $this->assertSame($invoice->id, $invoices->first()->id);
+
+        $request->query->set('search', 'Searchable');
+        $view = (new InvoiceController)->index();
+
+        $this->assertSame($invoice->id, $view->getData()['invoices']->first()->id);
+    }
+
     public function test_store_creates_invoice_and_redirects_to_edit(): void
     {
         $this->actingAs($this->createSystemUser());

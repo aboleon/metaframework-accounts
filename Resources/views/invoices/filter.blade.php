@@ -10,6 +10,12 @@
     <div id="invoice-filter"
         class="kvasir-filter d-flex flex-md-nowrap align-items-end bg-body-tertiary mb-3 flex-wrap gap-2 rounded p-3"
         data-url="{!! Request::url() !!}" data-page-index="{!! request()->has('page') !!}">
+        <div class="d-flex flex-column" style="min-width: 220px;">
+            <label class="form-label">{{ __('mfw-accounts::ui.invoice_search') }}</label>
+            <input type="search" name="search" value="{{ request('search') }}"
+                placeholder="{{ __('mfw-accounts::ui.invoice_search_placeholder') }}"
+                class="form-control form-control-sm">
+        </div>
         <div class="d-flex flex-column">
             <label class="form-label">{!! __('mfw-accounts::ui.PayDocType') !!}</label>
             <div class="dropdown">

@@ -233,6 +233,8 @@ return [
     'Account' => 'Compte',
     'Client' => 'Client|Clients',
     'search_client' => 'Rechercher un client',
+    'invoice_search' => 'Recherche facture',
+    'invoice_search_placeholder' => 'Titre, note, ligne, client...',
     'particulier' => 'particulier',
     'originalInfo' => 'Information d\'origine',
     'errorClientInvoices' => 'Ce client à un historique comptable',

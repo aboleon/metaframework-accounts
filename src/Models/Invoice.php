@@ -228,7 +228,42 @@ class Invoice extends Model
                     return $builder->where('account_id', $clientId);
                 },
             )
+            ->when(
+                trim((string) ($filters['search'] ?? '')) !== '',
+                fn (Builder $builder) => $this->scopeSearch($builder, (string) $filters['search']),
+            )
             ->when($filters['sale_id'] ?? null, fn (Builder $builder, $saleId) => $builder->where('sale_id', $saleId));
+    }
+
+    public function scopeSearch(Builder $query, string $search): Builder
+    {
+        $pattern = '%' . trim($search) . '%';
+
+        return $query->where(function (Builder $builder) use ($pattern): void {
+            $builder
+                ->where('title', 'like', $pattern)
+                ->orWhere('subtitle', 'like', $pattern)
+                ->orWhere('content', 'like', $pattern)
+                ->orWhere('notes', 'like', $pattern)
+                ->orWhere('amount_text', 'like', $pattern)
+                ->orWhere('expense_protocol_ref', 'like', $pattern)
+                ->orWhere('hash', 'like', $pattern)
+                ->orWhere('pdf_locale', 'like', $pattern)
+                ->orWhere('sell_channel', 'like', $pattern)
+                ->orWhere('pay_mean', 'like', $pattern)
+                ->orWhereHas('details', function (Builder $details) use ($pattern): void {
+                    $details->where('content', 'like', $pattern);
+                })
+                ->orWhereHas('client', function (Builder $client) use ($pattern): void {
+                    $client
+                        ->where('first_name', 'like', $pattern)
+                        ->orWhere('last_name', 'like', $pattern)
+                        ->orWhere('email', 'like', $pattern)
+                        ->orWhereHas('business', function (Builder $business) use ($pattern): void {
+                            $business->where('name', 'like', $pattern);
+                        });
+                });
+        });
     }
 
     public function scopeAmounts(Builder $query, array $filters = []): Builder

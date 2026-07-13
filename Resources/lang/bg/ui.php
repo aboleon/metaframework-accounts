@@ -74,6 +74,8 @@ return [
     ],
     'Client' => 'Клиент|Клиенти',
     'search_client' => 'Търси клиент',
+    'invoice_search' => 'Търсене на фактура',
+    'invoice_search_placeholder' => 'Заглавие, бележка, ред, клиент...',
     'ClientAccount' => 'Сметка клиент',
     'ClientList' => 'Списък клиенти',
     'clients_by_country' => 'Клиенти по страни',
