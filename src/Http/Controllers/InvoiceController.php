@@ -19,11 +19,12 @@ use MetaFramework\Accounts\Models\Currency;
 use MetaFramework\Accounts\Models\Invoice;
 use MetaFramework\Accounts\Models\InvoiceStructure;
 use MetaFramework\Accounts\Support\InvoiceExtensionResolver;
+use MetaFramework\Services\SqlQueryService;
 use MetaFramework\Services\Validation\ValidationInstance;
 
 class InvoiceController
 {
-    public function index(): View
+    public function index(SqlQueryService $sqlQueryService): View
     {
         $filters = request()->all();
         $sortBy = (string) ($filters['sort_by'] ?? '');
@@ -38,10 +39,21 @@ class InvoiceController
             unset($filters['paid']);
         }
 
+        $sqlQueryToken = (string) request('mfw_sql_query', '');
+        $routeName = request()->route()?->getName();
+        $sqlQueryImpactsIndex = $sqlQueryService->impactsIndex($sqlQueryToken, $routeName);
         $query = Invoice::query()
-            ->whereNull('duplicata')
-            ->with(['client', 'createdBy', 'currencyType', 'docType', 'expenseAssociatedInvoices'])
-            ->filters($filters);
+            ->with(['client', 'createdBy', 'currencyType', 'docType', 'expenseAssociatedInvoices']);
+
+        if (!$sqlQueryImpactsIndex) {
+            $query->whereNull('duplicata')->filters($filters);
+        }
+
+        $query = $sqlQueryService->applyToIndex(
+            $query,
+            $sqlQueryToken,
+            $routeName,
+        );
 
         $sortMap = [
             'invoice_id' => 'document_id',
@@ -51,10 +63,12 @@ class InvoiceController
             'net_gain_percent' => 'net_gain_percent',
         ];
 
-        if (array_key_exists($sortBy, $sortMap)) {
-            $query->orderBy($sortMap[$sortBy], $sortDir)->orderByDesc('id');
-        } else {
-            $query->orderByDesc('id');
+        if (!$sqlQueryImpactsIndex) {
+            if (array_key_exists($sortBy, $sortMap)) {
+                $query->orderBy($sortMap[$sortBy], $sortDir)->orderByDesc('id');
+            } else {
+                $query->orderByDesc('id');
+            }
         }
 
         $total = $query->count();
@@ -99,7 +113,10 @@ class InvoiceController
             ? round($summaryTotals['net_gain_percent_sum'] / $summaryTotals['net_gain_percent_count'], 2)
             : null;
         unset($summaryTotals['net_gain_percent_sum'], $summaryTotals['net_gain_percent_count']);
-        $invoices = $query->paginate(15);
+        $perPage = $sqlQueryImpactsIndex
+            ? max(1, count($sqlQueryService->current($sqlQueryToken)?->rows ?? []))
+            : 15;
+        $invoices = $query->paginate($perPage);
         $expenseAssociations = DB::table('mfw_accounts_invoice_expense_associations')
             ->join('mfw_accounts_invoices', 'mfw_accounts_invoices.id', '=', 'mfw_accounts_invoice_expense_associations.parent_invoice_id')
             ->whereIn('mfw_accounts_invoice_expense_associations.associated_invoice_id', $invoices->pluck('id'))

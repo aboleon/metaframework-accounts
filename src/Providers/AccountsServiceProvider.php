@@ -15,6 +15,8 @@ use Illuminate\Translation\Translator;
 use MetaFramework\Accounts\Console\InstallFrontAccount;
 use MetaFramework\Accounts\Models\Currency;
 use MetaFramework\Accounts\Support\AccountModel;
+use MetaFramework\Accounts\Support\InvoiceSqlQueryIndexFilter;
+use MetaFramework\Services\SqlQueryIndexFilterRegistry;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Throwable;
@@ -42,6 +44,13 @@ class AccountsServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerBladeComponents();
         $this->shareCurrencies();
+        $this->callAfterResolving(
+            SqlQueryIndexFilterRegistry::class,
+            static fn (SqlQueryIndexFilterRegistry $registry) => $registry->register(
+                'mfw-accounts.invoices.index',
+                InvoiceSqlQueryIndexFilter::class,
+            ),
+        );
 
         if ($this->app->runningInConsole()) {
             $this->commands([

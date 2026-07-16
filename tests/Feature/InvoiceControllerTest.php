@@ -17,6 +17,7 @@ use MetaFramework\Accounts\Tests\Feature\Concerns\InteractsWithAccountsControlle
 use MetaFramework\Accounts\Tests\TestCase;
 use MetaFramework\Inputable\InputableServiceProvider;
 use MetaFramework\ServiceProvider as MetaFrameworkServiceProvider;
+use MetaFramework\Services\SqlQueryService;
 use MetaFramework\Support\SupportServiceProvider;
 
 class InvoiceControllerTest extends TestCase
@@ -61,7 +62,7 @@ class InvoiceControllerTest extends TestCase
         ]);
         $this->app->instance('request', $request);
 
-        $view = (new InvoiceController)->index();
+        $view = (new InvoiceController)->index($this->app->make(SqlQueryService::class));
 
         $this->assertInstanceOf(View::class, $view);
         $this->assertSame('mfw-accounts::invoices.index', $view->name());
@@ -117,16 +118,68 @@ class InvoiceControllerTest extends TestCase
         ]);
         $this->app->instance('request', $request);
 
-        $view = (new InvoiceController)->index();
+        $view = (new InvoiceController)->index($this->app->make(SqlQueryService::class));
 
         $invoices = $view->getData()['invoices'];
         $this->assertSame(1, $invoices->total());
         $this->assertSame($invoice->id, $invoices->first()->id);
 
         $request->query->set('search', 'Searchable');
-        $view = (new InvoiceController)->index();
+        $view = (new InvoiceController)->index($this->app->make(SqlQueryService::class));
 
         $this->assertSame($invoice->id, $view->getData()['invoices']->first()->id);
+    }
+
+    public function test_sql_query_context_can_filter_the_regular_invoice_index(): void
+    {
+        $docType = $this->seedCashflowDocType([
+            'id' => 5,
+            'slug' => 'invoice',
+            'name' => 'Invoice',
+            'admin_name' => 'Invoice',
+        ]);
+        $operator = $this->createSystemUser();
+        $firstMatchingInvoice = $this->createInvoice([
+            'operator' => $operator,
+            'doc_type' => $docType->id,
+            'document_id' => 301,
+            'duplicata' => 1,
+        ]);
+        $secondMatchingInvoice = $this->createInvoice([
+            'operator' => $operator,
+            'doc_type' => $docType->id,
+            'document_id' => 302,
+        ]);
+        $this->createInvoice([
+            'operator' => $operator,
+            'doc_type' => $docType->id,
+            'document_id' => 303,
+        ]);
+        $token = 'invoice-index-context';
+        session()->put('mfw.sql_query.contexts.' . $token, [
+            'query' => sprintf(
+                'SELECT id FROM mfw_accounts_invoices WHERE id IN (%d, %d) ORDER BY document_id ASC',
+                $firstMatchingInvoice->id,
+                $secondMatchingInvoice->id,
+            ),
+            'affects_index' => true,
+        ]);
+        $request = Request::create('/mfw-accounts/invoices', 'GET', [
+            'mfw_sql_query' => $token,
+        ]);
+        $route = $this->app['router']->getRoutes()->getByName('mfw-accounts.invoices.index');
+        $request->setRouteResolver(static fn () => $route);
+        $this->app->instance('request', $request);
+
+        $view = (new InvoiceController)->index($this->app->make(SqlQueryService::class));
+
+        $invoices = $view->getData()['invoices'];
+        $this->assertSame(2, $invoices->total());
+        $this->assertSame(2, $invoices->perPage());
+        $this->assertSame([
+            $firstMatchingInvoice->id,
+            $secondMatchingInvoice->id,
+        ], $invoices->pluck('id')->all());
     }
 
     public function test_store_creates_invoice_and_redirects_to_edit(): void

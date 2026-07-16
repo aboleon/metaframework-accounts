@@ -7,6 +7,9 @@
 @endphp
 
 <form method="get" autocomplete="off" data-ajax="{{ route('mfw-accounts.ajax') }}">
+    @if (request()->filled('mfw_sql_query'))
+        <input type="hidden" name="mfw_sql_query" value="{{ request('mfw_sql_query') }}">
+    @endif
     <div id="invoice-filter"
         class="kvasir-filter d-flex flex-md-nowrap align-items-end bg-body-tertiary mb-3 flex-wrap gap-2 rounded p-3"
         data-url="{!! Request::url() !!}" data-page-index="{!! request()->has('page') !!}">
@@ -189,5 +192,4 @@
         }
     </style>
 @endpushonce
-
 
