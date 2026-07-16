@@ -150,6 +150,7 @@ class InvoiceController
             'accessor' => new InvoiceAccessor($invoice),
             'expenseAccessor' => $expenseAccessor,
             'data' => $invoice,
+            'documentInvoice' => $invoice->documentInvoice(),
             'client' => $invoice->client,
             'bank_accounts' => BankAccounts::accounts(config('app.locale')),
         ]);

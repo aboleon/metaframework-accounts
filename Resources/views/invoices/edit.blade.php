@@ -347,7 +347,7 @@
                     </div>
 
                     @if ($invoiceExtensionView = config('mfw-accounts.extensions.invoice_view'))
-                        @include($invoiceExtensionView, ['invoice' => $data])
+                        @include($invoiceExtensionView, ['invoice' => $data, 'documentInvoice' => $documentInvoice])
                     @endif
 
                     <div class="text-center">

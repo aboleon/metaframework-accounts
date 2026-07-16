@@ -410,6 +410,15 @@ class Invoice extends Model
             ->where('account_id', $this->account_id);
     }
 
+    public function documentInvoice(): self
+    {
+        return self::query()
+            ->where('document_id', $this->document_id)
+            ->whereNull('duplicata')
+            ->oldest('id')
+            ->first() ?? $this;
+    }
+
     public function facturation(): HasMany
     {
         return $this->hasMany(self::class, 'account_id', 'account_id')->where('doc_type', 1);
