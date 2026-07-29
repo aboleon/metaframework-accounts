@@ -25,14 +25,14 @@
                     <tr>
                         <th>{{ __('mfw-sellable.vat.rate') }}</th>
                         <th>{{ __('mfw-sellable.vat.default') }}</th>
-                        <th width="200">{{ __('mfw.action') }}</th>
+                        <th width="200">{{ __('mfw::mfw.action') }}</th>
                     </tr>
                     </thead>
                     <tbody>
                     @forelse($data as $item)
                         <tr>
                             <td>{{ $item->rate }}</td>
-                            <td{!! $item->default ? ' class="bg-success"':'' !!}>{{ $item->default ? __('mfw.yes') : __('mfw.no') }}</td>
+                            <td{!! $item->default ? ' class="bg-success"':'' !!}>{{ $item->default ? __('mfw::mfw.yes') : __('mfw::mfw.no') }}</td>
                             <td>
                                 <ul class="mfw-actions">
                                     <x-mfw::edit-link :route="route('mfw-accounts.vat.edit', $item->id)"/>
@@ -47,7 +47,7 @@
                     @empty
                         <tr>
                             <td colspan="7">
-                                {{ __('errors.no_data_in_db') }}
+                                {{ __('mfw::errors.no_data_in_db') }}
                             </td>
                         </tr>
                     @endforelse

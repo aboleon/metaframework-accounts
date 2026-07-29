@@ -53,7 +53,7 @@ class PayMeansChannelController
                 'pay_mean_id' => (int) ($validated['category'] ?? 0),
             ]);
 
-            $this->responseSuccess(__('mfw.record_created'));
+            $this->responseSuccess(__('mfw::mfw.record_created'));
             $this->redirectTo(route('mfw-accounts.pay-mean-channels.edit', $channel));
         } catch (Throwable $exception) {
             $this->responseException($exception);
@@ -88,7 +88,7 @@ class PayMeansChannelController
                 'name' => $name,
             ]);
 
-            $this->responseSuccess(__('mfw.record_updated'));
+            $this->responseSuccess(__('mfw::mfw.record_updated'));
             $this->redirectTo(route('mfw-accounts.pay-mean-channels.edit', $payMeansChannel));
         } catch (Throwable $exception) {
             $this->responseException($exception);
@@ -103,7 +103,7 @@ class PayMeansChannelController
 
         try {
             $payMeansChannel->delete();
-            $this->responseSuccess(__('mfw.record_deleted'));
+            $this->responseSuccess(__('mfw::mfw.record_deleted'));
         } catch (Throwable $exception) {
             $this->responseException($exception);
         }

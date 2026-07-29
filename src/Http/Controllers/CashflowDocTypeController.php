@@ -39,7 +39,7 @@ class CashflowDocTypeController
     {
         try {
             CashflowDocTypes::create($this->validatedData($request));
-            $this->responseSuccess(__('mfw.record_created'));
+            $this->responseSuccess(__('mfw::mfw.record_created'));
             $this->redirectTo(route('mfw-accounts.cashflow-doctypes.index'));
         } catch (Throwable $exception) {
             $this->responseException($exception);
@@ -60,7 +60,7 @@ class CashflowDocTypeController
     {
         try {
             $cashflowDocType->update($this->validatedData($request, $cashflowDocType));
-            $this->responseSuccess(__('mfw.record_updated'));
+            $this->responseSuccess(__('mfw::mfw.record_updated'));
             $this->redirectTo(route('mfw-accounts.cashflow-doctypes.index'));
         } catch (Throwable $exception) {
             $this->responseException($exception);
@@ -79,7 +79,7 @@ class CashflowDocTypeController
 
         try {
             $cashflowDocType->delete();
-            $this->responseSuccess(__('mfw.record_deleted'));
+            $this->responseSuccess(__('mfw::mfw.record_deleted'));
         } catch (Throwable $exception) {
             $this->responseException($exception);
         }
@@ -154,5 +154,3 @@ class CashflowDocTypeController
         } while (true);
     }
 }
-
-

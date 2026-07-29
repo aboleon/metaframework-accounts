@@ -121,8 +121,8 @@
                     </ul>
                     @if($canDelete)
                         <x-mfw::modal :route="route('mfw-accounts.clients.destroy', $item->id)"
-                                      title="{{ __('mfw.delete') }}"
-                                      question="{!! __('mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. $accountName }}</b>"
+                                      title="{{ __('mfw::mfw.delete') }}"
+                                      question="{!! __('mfw::mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. $accountName }}</b>"
                                       reference="destroy_client_{{ $item->id }}"/>
                     @endif
                 </td>

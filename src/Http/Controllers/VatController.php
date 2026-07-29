@@ -48,7 +48,7 @@ class VatController
             Cache::forget('vats');
             $vat->manageDefaultState();
 
-            $this->responseSuccess(__('mfw.record_created'));
+            $this->responseSuccess(__('mfw::mfw.record_created'));
             $this->redirect_route = 'mfw-accounts.vat.index';
 
         } catch (Throwable $e) {
@@ -80,7 +80,7 @@ class VatController
             Cache::forget('vats');
             $vat->manageDefaultState();
 
-            $this->responseSuccess(__('mfw.record_created'));
+            $this->responseSuccess(__('mfw::mfw.record_created'));
             $this->redirect_route = 'mfw-accounts.vat.index';
 
         } catch (Throwable $e) {

@@ -34,7 +34,7 @@ class PayMeanController
     {
         try {
             PayMeans::create($this->validatedData($request));
-            $this->responseSuccess(__('mfw.record_created'));
+            $this->responseSuccess(__('mfw::mfw.record_created'));
             $this->redirectTo(route('mfw-accounts.pay-means.index'));
         } catch (Throwable $exception) {
             $this->responseException($exception);
@@ -55,7 +55,7 @@ class PayMeanController
     {
         try {
             $payMean->update($this->validatedData($request));
-            $this->responseSuccess(__('mfw.record_updated'));
+            $this->responseSuccess(__('mfw::mfw.record_updated'));
             $this->redirectTo(route('mfw-accounts.pay-means.index'));
         } catch (Throwable $exception) {
             $this->responseException($exception);
@@ -74,7 +74,7 @@ class PayMeanController
 
         try {
             $payMean->delete();
-            $this->responseSuccess(__('mfw.record_deleted'));
+            $this->responseSuccess(__('mfw::mfw.record_deleted'));
         } catch (Throwable $exception) {
             $this->responseException($exception);
         }
@@ -93,5 +93,3 @@ class PayMeanController
         return is_array($validated) ? $validated : [];
     }
 }
-
-

@@ -44,9 +44,9 @@ trait MailableCommons
             );
         }
 
-        $name = __('mfw.mailer.from_name');
+        $name = __('mfw::mfw.mailer.from_name');
 
-        if ($name === 'mfw.mailer.from_name') {
+        if ($name === 'mfw::mfw.mailer.from_name') {
             $name = config('app.name');
         }
 

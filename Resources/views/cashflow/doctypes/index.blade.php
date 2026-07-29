@@ -40,8 +40,8 @@
                         <x-mfw::delete-modal-link reference="doctype_{{ $item->id }}"/>
                     </ul>
                     <x-mfw::modal :route="route('mfw-accounts.cashflow-doctypes.destroy', $item->id)"
-                                  title="{{ __('mfw.delete') }}"
-                                  question="{!! __('mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. ($item->admin_name ?: $item->name) }}</b>"
+                                  title="{{ __('mfw::mfw.delete') }}"
+                                  question="{!! __('mfw::mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. ($item->admin_name ?: $item->name) }}</b>"
                                   reference="destroy_doctype_{{ $item->id }}"/>
                 </td>
             </tr>

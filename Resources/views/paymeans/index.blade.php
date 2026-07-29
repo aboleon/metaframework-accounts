@@ -37,8 +37,8 @@
                     <x-mfw::delete-modal-link reference="paymeans_{{ $item->id }}"/>
                 </ul>
                 <x-mfw::modal :route="route('mfw-accounts.pay-means.destroy', $item)"
-                              title="{{ __('mfw.delete') }}"
-                              question="{!! __('mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. $item->name }}</b>"
+                              title="{{ __('mfw::mfw.delete') }}"
+                              question="{!! __('mfw::mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' '. $item->name }}</b>"
                               reference="destroy_paymeans_{{ $item->id }}"/>
             </td>
         </tr>

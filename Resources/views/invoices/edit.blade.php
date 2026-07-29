@@ -212,10 +212,10 @@
                                     <td class="text-end">
                                         <x-mfw::simple-modal id="delete_invoice_line"
                                             class="btn btn-danger btn-sm pt-2 invoice-line-delete"
-                                            :title="__('mfw.deletion')" :body="__('mfw.should_i_delete_record')"
-                                            confirmclass="btn-danger" :confirm="__('mfw.delete')"
+                                            :title="__('mfw::mfw.deletion')" :body="__('mfw::mfw.should_i_delete_record')"
+                                            confirmclass="btn-danger" :confirm="__('mfw::mfw.delete')"
                                             callback="bindDeleteInvoiceLineFromModal" identifier="#{{ $lineIdentifier }}"
-                                            linktitle="{{ __('mfw.delete') }}" text='<i class="bi bi-trash-fill"></i>' />
+                                            linktitle="{{ __('mfw::mfw.delete') }}" text='<i class="bi bi-trash-fill"></i>' />
                                     </td>
                                 </tr>
                             @endforeach
@@ -257,10 +257,10 @@
                                 <td class="text-end">
                                     <x-mfw::simple-modal id="delete_invoice_line"
                                         class="btn btn-danger btn-sm pt-2 invoice-line-delete"
-                                        :title="__('mfw.deletion')" :body="__('mfw.should_i_delete_record')"
-                                        confirmclass="btn-danger" :confirm="__('mfw.delete')"
+                                        :title="__('mfw::mfw.deletion')" :body="__('mfw::mfw.should_i_delete_record')"
+                                        confirmclass="btn-danger" :confirm="__('mfw::mfw.delete')"
                                         callback="bindDeleteInvoiceLineFromModal" identifier="#invoice-line-0"
-                                        linktitle="{{ __('mfw.delete') }}" text='<i class="bi bi-trash-fill"></i>' />
+                                        linktitle="{{ __('mfw::mfw.delete') }}" text='<i class="bi bi-trash-fill"></i>' />
                                 </td>
                             </tr>
                         @endif

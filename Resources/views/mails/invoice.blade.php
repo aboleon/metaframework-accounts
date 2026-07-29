@@ -22,7 +22,7 @@
         $signatureName = auth()->user()?->names();
 
         if (empty($signatureName)) {
-            $translationKey = trim((string) config('mfw.mailer.from.translation_key', 'mfw.mailer.from_name'));
+            $translationKey = trim((string) config('mfw.mailer.from.translation_key', 'mfw::mfw.mailer.from_name'));
             $strictLocaleTranslation = (bool) config('mfw.mailer.from.strict_locale_translation', true);
 
             if ($translationKey !== '') {

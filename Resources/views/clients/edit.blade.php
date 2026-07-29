@@ -33,7 +33,7 @@
                     <div class="nav nav-tabs" id="account-client-tabs" role="tablist">
                         <button class="nav-link active" id="account-tab-info" data-bs-toggle="tab" data-bs-target="#account-pane-info"
                             type="button" role="tab" aria-controls="account-pane-info" aria-selected="true">
-                            {{ __('mfw.infos') }}
+                            {{ __('mfw::mfw.infos') }}
                         </button>
                         <button class="nav-link" id="account-tab-address" data-bs-toggle="tab" data-bs-target="#account-pane-address"
                             type="button" role="tab" aria-controls="account-pane-address" aria-selected="false">

@@ -39,8 +39,8 @@
                             <x-mfw::edit-link :route="route('mfw-accounts.pay-mean-channels.edit', $item)" />
                             <x-mfw::delete-modal-link reference="remove_paymeanschannel_{{ $item->id }}" />
                         </ul>
-                        <x-mfw::modal :route="route('mfw-accounts.pay-mean-channels.destroy', $item)" title="{{ __('mfw.delete') }}"
-                            question="{!! __('mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' ' . ($item->name ?: '-') }}</b>"
+                        <x-mfw::modal :route="route('mfw-accounts.pay-mean-channels.destroy', $item)" title="{{ __('mfw::mfw.delete') }}"
+                            question="{!! __('mfw::mfw.should_i_delete_record') !!} - <b>{{ $item->id . ' ' . ($item->name ?: '-') }}</b>"
                             reference="remove_paymeanschannel_{{ $item->id }}" :params="['object_id' => $item->id]" />
                     </td>
                 </tr>
