@@ -106,7 +106,7 @@
                     <div class="tab-pane fade" id="account-pane-address" role="tabpanel"
                         aria-labelledby="account-tab-address">
                         <div class="row g-4">
-                            <div class="{{ $data && $data->exists ? 'col-lg-7' : 'col-12' }}">
+                            <div class="col-12">
                                 <div class="border rounded-4 bg-white p-4">
                                     <x-mfw-google-places::form :model="$address"
                                         label="{{ __('mfw-accounts::ui.Adress') }} (taper pour obtenir des resultats)" />
@@ -124,11 +124,6 @@
                                 </div>
                             </div>
 
-                            @if ($data && $data->exists)
-                                <div class="col-lg-5">
-                                    <x-translatable-google-address-corrections :model="$address" />
-                                </div>
-                            @endif
                         </div>
                     </div>
 
