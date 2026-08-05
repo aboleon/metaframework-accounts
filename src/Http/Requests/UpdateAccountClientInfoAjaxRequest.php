@@ -5,9 +5,28 @@ declare(strict_types=1);
 namespace MetaFramework\Accounts\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use MetaFramework\Accounts\Support\AccountModel;
 
 class UpdateAccountClientInfoAjaxRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (!$this->missing('email')) {
+            return;
+        }
+
+        $accountId = (int) $this->input('object_id');
+        if ($accountId < 1) {
+            return;
+        }
+
+        $accountClass = AccountModel::className();
+        $email = $accountClass::query()->whereKey($accountId)->value('email');
+        if (is_string($email) && trim($email) !== '') {
+            $this->merge(['email' => $email]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;

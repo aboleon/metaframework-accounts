@@ -10,6 +10,24 @@ use MetaFramework\Accounts\Support\AccountModel;
 
 class UpdateAccountClientAjaxRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (!$this->missing('email')) {
+            return;
+        }
+
+        $accountId = (int) $this->input('object_id');
+        if ($accountId < 1) {
+            return;
+        }
+
+        $accountClass = AccountModel::className();
+        $email = $accountClass::query()->whereKey($accountId)->value('email');
+        if (is_string($email) && trim($email) !== '') {
+            $this->merge(['email' => $email]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -95,7 +113,11 @@ class UpdateAccountClientAjaxRequest extends FormRequest
             return true;
         }
 
-        if ($this->boolean('is_company') || $this->has('business')) {
+        if ($this->has('is_company')) {
+            return $this->boolean('is_company');
+        }
+
+        if ($this->has('business')) {
             return true;
         }
 

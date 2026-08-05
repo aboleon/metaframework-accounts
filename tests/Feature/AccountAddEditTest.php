@@ -121,6 +121,31 @@ class AccountAddEditTest extends TestCase
         $this->assertMissingEmailValidationForAction('update_client_info');
     }
 
+    public function test_update_client_info_action_preserves_existing_email_when_it_is_omitted(): void
+    {
+        $this->actingAs($this->createSystemUser());
+        $account = $this->createAccount();
+
+        $response = $this->postJson(route('mfw-accounts.ajax'), [
+            'action' => 'update_client_info',
+            'object' => 'Account',
+            'object_id' => $account->id,
+            'first_name' => 'Edited',
+            'last_name' => 'Client',
+            'phone' => '+35970000005',
+            'civ' => 'A',
+            'locale' => 'fr',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('client_id', $account->id);
+        $this->assertDatabaseHas('users', [
+            'id' => $account->id,
+            'email' => $account->email,
+            'phone' => '+35970000005',
+        ]);
+    }
+
     public function test_update_client_info_action_creates_account_and_address_from_ajax_create_flow(): void
     {
         $this->actingAs($this->createSystemUser());

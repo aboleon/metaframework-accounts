@@ -285,6 +285,9 @@ function bindCreateAddressPayloadMerge($infoForm, $addressForm, trimValue) {
         return;
     }
 
+    const $companyForm = $('#account-client-company-form');
+    const $companyToggle = $infoForm.find('[name="is_company"]').first();
+
     const $submit = $infoForm.find('.ajaxable').first();
     if (!$submit.length) {
         return;
@@ -314,6 +317,11 @@ function bindCreateAddressPayloadMerge($infoForm, $addressForm, trimValue) {
         applyManualAddressFix($addressForm);
 
         const requestData = $infoForm.find('input, select, textarea').serializeArray();
+
+        if (trimValue($infoForm.find('input[name="object_id"]').first().val()) === '' && $companyForm.length &&
+            $companyToggle.is(':checked')) {
+            appendCompanyFields(requestData, $companyForm);
+        }
 
         if (createAddressPayloadIsFilled($infoForm, $addressForm, trimValue)) {
             appendAddressFields(requestData, $addressForm);
@@ -384,6 +392,18 @@ function appendAddressFields(requestData, $addressForm) {
     const ignoredFields = ['_token', 'action', 'object_id'];
 
     $.each($addressForm.find('input, select, textarea').serializeArray(), function (index, field) {
+        if (ignoredFields.indexOf(field.name) !== -1) {
+            return;
+        }
+
+        requestData.push(field);
+    });
+}
+
+function appendCompanyFields(requestData, $companyForm) {
+    const ignoredFields = ['_token', 'action', 'object_id'];
+
+    $.each($companyForm.find('input, select, textarea').serializeArray(), function (index, field) {
         if (ignoredFields.indexOf(field.name) !== -1) {
             return;
         }
