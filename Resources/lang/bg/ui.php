@@ -113,7 +113,7 @@ return [
     'Currency' => 'Валута|Валути',
     'CurrencySign' => 'Знак',
     'dab' => 'теглене в брой|тегления в брой',
-    'dashboard' => 'Справочник',
+    'dashboard' => 'Оборот',
     'WelcomeBack' => 'Добре дошли отново',
     'YourAccountInformation' => 'Информация за вашия акаунт',
     'MemberSince' => 'Член от',
